@@ -166,8 +166,11 @@ never if the local folder is empty or missing (unplugged drive), and never for a
   <tr><th>Key</th><th>Meaning</th></tr>
   <tr><td><code>intervalMinutes</code></td><td>Sync every N minutes (omitted or 0: off).</td></tr>
   <tr><td><code>dailyTimes</code></td><td>Fixed times <code>"HH:mm"</code>. A time missed while the Mac was asleep is caught up on wake.</td></tr>
+  <tr><td><code>dailyTimesEnabled</code></td><td><code>false</code>: fixed times off (the list is kept but ignored). Omitted: on.</td></tr>
   <tr><td><code>syncOnLaunch</code></td><td>Sync when the app starts.</td></tr>
 </table>
+<p>In the <b>Sync</b> tab, unchecking <i>Sync at regular intervals</i> or <i>Sync at fixed times</i> turns that
+option off (an interval of 0 does too). With both off, sync runs only at launch (if checked) or with <b>Sync Now</b>.</p>
 
 <h2 id="menu">6. The menu</h2>
 <table>

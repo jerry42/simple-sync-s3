@@ -29,7 +29,7 @@ public struct Scheduler {
            now.timeIntervalSince(lastSyncStart) >= Double(minutes) * 60 {
             return "every \(minutes) min"
         }
-        for time in schedule.dailyTimes ?? [] {
+        for time in schedule.activeDailyTimes {
             guard let (h, m) = Self.parseTime(time) else { continue }
             // On vérifie aujourd'hui et hier (cas d'un réveil après minuit).
             for dayOffset in [0, -1] {

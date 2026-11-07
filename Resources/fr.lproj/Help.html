@@ -166,8 +166,12 @@ jamais si le dossier local est vide ou introuvable (disque débranché), et jama
   <tr><th>Clé</th><th>Rôle</th></tr>
   <tr><td><code>intervalMinutes</code></td><td>Synchro toutes les N minutes (absent ou 0 : désactivé).</td></tr>
   <tr><td><code>dailyTimes</code></td><td>Heures fixes <code>"HH:mm"</code>. Une heure manquée pendant la veille est rattrapée au réveil.</td></tr>
+  <tr><td><code>dailyTimesEnabled</code></td><td><code>false</code> : heures fixes désactivées (la liste est conservée mais ignorée). Absent : activées.</td></tr>
   <tr><td><code>syncOnLaunch</code></td><td>Synchro au démarrage de l'app.</td></tr>
 </table>
+<p>Dans l'onglet <b>Synchro</b>, décocher <i>Synchroniser à intervalle régulier</i> ou <i>Synchroniser à heures fixes</i>
+désactive l'option (un intervalle de 0 aussi). Si les deux sont désactivées, la synchro ne se lance qu'au démarrage
+(si coché) ou avec <b>Synchroniser maintenant</b>.</p>
 
 <h2 id="menu">6. Le menu</h2>
 <table>

@@ -85,6 +85,14 @@ final class SchedulerTests: XCTestCase {
         XCTAssertNil(scheduler.shouldSync(schedule: schedule, now: date(day: 13, 9, 1)))
     }
 
+    func testDisabledDailyTimesDoNotFire() {
+        var scheduler = Scheduler(now: date(1, 50))
+        let off = ScheduleConfig(dailyTimes: ["02:00"], dailyTimesEnabled: false)
+        XCTAssertNil(scheduler.shouldSync(schedule: off, now: date(2, 0, 10)))
+        let on = ScheduleConfig(dailyTimes: ["03:00"], dailyTimesEnabled: true)
+        XCTAssertEqual(scheduler.shouldSync(schedule: on, now: date(3, 0, 10)), "scheduled time 03:00")
+    }
+
     func testInvalidDailyTimeIsIgnored() {
         var scheduler = Scheduler(now: date(1, 0))
         XCTAssertNil(scheduler.shouldSync(schedule: ScheduleConfig(dailyTimes: ["25:00", "bad"]), now: date(8, 0)))

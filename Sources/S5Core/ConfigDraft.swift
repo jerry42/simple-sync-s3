@@ -49,7 +49,7 @@ extension JSONValue: Codable {
 extension JSONValue {
     /// Ordre des clés connues (celui du modèle de config.json) ; les autres suivent, triées.
     static let keyOrder = ["awsProfile", "accessKeyId", "sessionToken", "secretAccessKey", "region", "bucket",
-                           "deleteRemote", "launchAtLogin", "schedule", "intervalMinutes", "dailyTimes",
+                           "deleteRemote", "launchAtLogin", "schedule", "intervalMinutes", "dailyTimes", "dailyTimesEnabled",
                            "syncOnLaunch", "folders", "localPath", "s3Prefix", "exclude"]
 
     /// JSON indenté sur 2 espaces ; les tableaux de valeurs simples tiennent sur une ligne.
@@ -192,6 +192,8 @@ public struct ConfigDraft: Equatable, Sendable {
     public var intervalMinutes = 0
     /// Heures fixes séparées par des virgules ou des espaces : "02:00, 13:30".
     public var dailyTimes = ""
+    /// false : heures fixes désactivées (la liste est conservée).
+    public var dailyTimesEnabled = true
     public var folders: [FolderDraft] = []
 
     private var raw: [String: JSONValue] = [:]
@@ -229,6 +231,7 @@ public struct ConfigDraft: Equatable, Sendable {
         if case .array(let times)? = schedule["dailyTimes"] {
             dailyTimes = times.compactMap(\.string).joined(separator: ", ")
         }
+        if case .bool(false)? = schedule["dailyTimesEnabled"] { dailyTimesEnabled = false }
         if case .array(let items)? = dict["folders"] {
             folders = try items.map(FolderDraft.init(json:))
         }
@@ -256,6 +259,7 @@ public struct ConfigDraft: Equatable, Sendable {
         schedule["intervalMinutes"] = intervalMinutes > 0 ? .number(Double(intervalMinutes)) : nil
         let times = dailyTimeList
         schedule["dailyTimes"] = times.isEmpty ? nil : .array(times.map(JSONValue.string))
+        schedule["dailyTimesEnabled"] = dailyTimesEnabled ? nil : .bool(false)
         schedule["syncOnLaunch"] = .bool(syncOnLaunch)
         dict["schedule"] = .object(schedule)
         dict["folders"] = .array(folders.map(\.json))

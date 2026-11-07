@@ -106,6 +106,8 @@
 "Every" = "Toutes les";
 "minutes" = "minutes";
 "Fixed times" = "Heures fixes";
+"Sync at fixed times" = "Synchroniser à heures fixes";
+"Unchecking an option turns it off (an interval of 0 does too). Fixed times are kept while turned off. With both off, sync only runs at launch (if checked) or with Sync Now." = "Décocher une option la désactive (un intervalle de 0 aussi). Les heures fixes sont conservées quand elles sont désactivées. Si les deux sont désactivées, la synchro ne se lance qu'au démarrage (si coché) ou avec « Synchroniser maintenant ».";
 "e.g. 02:00, 13:30" = "ex. 02:00, 13:30";
 "Sync when the app launches" = "Synchroniser au lancement de l'app";
 "Deletions" = "Suppressions";

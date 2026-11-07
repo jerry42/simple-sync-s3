@@ -69,13 +69,22 @@ public struct ScheduleConfig: Codable, Sendable {
     public var intervalMinutes: Int?
     /// Heures fixes quotidiennes au format "HH:mm".
     public var dailyTimes: [String]?
+    /// false : heures fixes désactivées (conservées mais ignorées). Absent = activées.
+    public var dailyTimesEnabled: Bool?
     /// Lancer une synchro au démarrage de l'app.
     public var syncOnLaunch: Bool?
 
-    public init(intervalMinutes: Int? = nil, dailyTimes: [String]? = nil, syncOnLaunch: Bool? = nil) {
+    public init(intervalMinutes: Int? = nil, dailyTimes: [String]? = nil, dailyTimesEnabled: Bool? = nil,
+                syncOnLaunch: Bool? = nil) {
         self.intervalMinutes = intervalMinutes
         self.dailyTimes = dailyTimes
+        self.dailyTimesEnabled = dailyTimesEnabled
         self.syncOnLaunch = syncOnLaunch
+    }
+
+    /// Heures fixes réellement prises en compte (aucune si désactivées).
+    public var activeDailyTimes: [String] {
+        dailyTimesEnabled == false ? [] : (dailyTimes ?? [])
     }
 }
 
@@ -197,7 +206,7 @@ public enum ConfigStore {
         if config.accessKeyId == nil && (config.secretAccessKey != nil || config.sessionToken != nil) {
             throw ConfigError.invalid(L10n.tr("“secretAccessKey” and “sessionToken” require “accessKeyId”"))
         }
-        for time in config.schedule.dailyTimes ?? [] where Scheduler.parseTime(time) == nil {
+        for time in config.schedule.activeDailyTimes where Scheduler.parseTime(time) == nil {
             throw ConfigError.invalid(L10n.tr("invalid time “%@” (format HH:mm)", time))
         }
         return config

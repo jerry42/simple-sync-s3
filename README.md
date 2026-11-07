@@ -101,7 +101,9 @@ On first launch the app creates a template at
 1. Click the menu bar icon → **Settings…** (⌘,).
 2. **AWS Account** tab: pick a profile from `~/.aws` (the **Profiles** menu lists them), or enter
    an access key; then the bucket name and its region.
-3. **Sync** tab: interval, fixed times, whether to mirror deletions, launch at login.
+3. **Sync** tab: interval, fixed times, whether to mirror deletions, launch at login. Uncheck the interval
+   or the fixed times to turn them off (an interval of `0` also means off); with both off, sync runs only at
+   launch (if enabled) or with **Sync Now**.
 4. **Folders** tab: **+** opens a folder picker. For each folder, set the S3 prefix and exclusions
    (one per line). A JSON mode lets you paste or edit the raw list.
 5. **Save** (⌘S): the configuration is validated, written to `config.json` and reloaded.
@@ -156,6 +158,7 @@ window; the window keeps any keys it does not show. After editing by hand, use *
 | `launchAtLogin` | Start the app at login (only from the installed `.app`). |
 | `schedule.intervalMinutes` | Sync every N minutes, counted from the end of the previous sync. Omitted or `0` = off. |
 | `schedule.dailyTimes` | Fixed times, `HH:mm`, local time. A time missed while the Mac was asleep is run on wake. |
+| `schedule.dailyTimesEnabled` | `false` turns fixed times off while keeping the list. Omitted = on. |
 | `schedule.syncOnLaunch` | Sync when the app starts. |
 | `folders[].localPath` | Local folder (`~` allowed). |
 | `folders[].s3Prefix` | Prefix ("folder") in the bucket. Default: the local folder's name. `""` uploads to the bucket root. |

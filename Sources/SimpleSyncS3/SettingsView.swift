@@ -142,7 +142,7 @@ private struct SyncTab: View {
 
     var body: some View {
         Form {
-            Section("Schedule") {
+            Section {
                 Toggle("Sync at regular intervals", isOn: intervalEnabled)
                 if model.draft.intervalMinutes > 0 {
                     HStack {
@@ -157,8 +157,16 @@ private struct SyncTab: View {
                         Spacer()
                     }
                 }
-                TextField("Fixed times", text: $model.draft.dailyTimes, prompt: Text("e.g. 02:00, 13:30"))
+                Toggle("Sync at fixed times", isOn: $model.draft.dailyTimesEnabled)
+                if model.draft.dailyTimesEnabled {
+                    TextField("Fixed times", text: $model.draft.dailyTimes, prompt: Text("e.g. 02:00, 13:30"))
+                }
                 Toggle("Sync when the app launches", isOn: $model.draft.syncOnLaunch)
+            } header: {
+                Text("Schedule")
+            } footer: {
+                Text("Unchecking an option turns it off (an interval of 0 does too). Fixed times are kept while turned off. With both off, sync only runs at launch (if checked) or with Sync Now.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {

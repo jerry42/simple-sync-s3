@@ -97,6 +97,33 @@ final class ConfigDraftTests: XCTestCase {
         XCTAssertThrowsError(try draft.validate())
     }
 
+    func testDisablingDailyTimesKeepsThem() throws {
+        var draft = try ConfigDraft(data: Data(full.utf8))
+        XCTAssertTrue(draft.dailyTimesEnabled)
+        draft.accessKeyId = "AKIAEXAMPLE"  // le modèle a un sessionToken, qui exige une clé d'accès
+        draft.dailyTimesEnabled = false
+        let data = draft.encoded()
+        let schedule = try XCTUnwrap(try JSONDecoder().decode(JSONValue.self, from: data).object?["schedule"]?.object)
+        XCTAssertEqual(schedule["dailyTimesEnabled"], .bool(false))
+        XCTAssertEqual(schedule["dailyTimes"], .array([.string("02:00"), .string("13:30")]))
+        let reread = try ConfigDraft(data: data)
+        XCTAssertFalse(reread.dailyTimesEnabled)
+        XCTAssertEqual(reread.dailyTimes, "02:00, 13:30")
+        XCTAssertEqual(try draft.validate().schedule.activeDailyTimes, [])
+
+        draft.dailyTimesEnabled = true
+        let back = try XCTUnwrap(try JSONDecoder().decode(JSONValue.self, from: draft.encoded()).object?["schedule"]?.object)
+        XCTAssertNil(back["dailyTimesEnabled"])
+    }
+
+    func testInvalidTimeIgnoredWhenDailyTimesDisabled() throws {
+        var draft = try ConfigDraft(data: Data(full.utf8))
+        draft.accessKeyId = "AKIAEXAMPLE"
+        draft.dailyTimes = "25:00"
+        draft.dailyTimesEnabled = false
+        XCTAssertNoThrow(try draft.validate())
+    }
+
     func testFoldersJSONRoundTrip() throws {
         var draft = try ConfigDraft(data: Data(full.utf8))
         let json = draft.foldersJSON
