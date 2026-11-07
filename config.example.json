@@ -1,0 +1,20 @@
+{
+  "awsProfile": "default",
+  "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
+  "region": "eu-west-3",
+  "bucket": "mon-bucket",
+  "deleteRemote": false,
+  "launchAtLogin": false,
+  "schedule": {
+    "intervalMinutes": 60,
+    "dailyTimes": ["02:00"],
+    "syncOnLaunch": true
+  },
+  "folders": [
+    {
+      "localPath": "~/Documents/Factures",
+      "s3Prefix": "factures",
+      "exclude": ["*.tmp", "node_modules"]
+    }
+  ]
+}

@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aide Simple Sync S3</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1d1d1f; --muted: #6e6e73; --accent: #0a64d8;
+    --code-bg: #f2f2f5; --border: #d9d9de; --note-bg: #fff6dc; --note-border: #e8c75a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e; --fg: #f2f2f7; --muted: #a1a1a6; --accent: #5ea8ff;
+      --code-bg: #2c2c2e; --border: #3a3a3c; --note-bg: #3a3220; --note-border: #8a7330;
+    }
+  }
+  body { background: var(--bg); color: var(--fg); margin: 0;
+         font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 20px; margin: 40px 0 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  h3 { font-size: 16px; margin: 24px 0 6px; }
+  .lead { color: var(--muted); margin-top: 0; }
+  a { color: var(--accent); }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px;
+         font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre { background: var(--code-bg); padding: 12px 14px; border-radius: 8px; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+  .note { background: var(--note-bg); border-left: 4px solid var(--note-border);
+          padding: 8px 12px; border-radius: 4px; margin: 12px 0; }
+  nav ol { columns: 2; padding-left: 20px; }
+  @media (max-width: 600px) { nav ol { columns: 1; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Simple Sync S3 <small>(S5)</small></h1>
+<p class="lead">Envoie automatiquement des dossiers de ton Mac vers un bucket Amazon S3. Synchro à sens unique
+(Mac → S3), à intervalle régulier et/ou à heures fixes, depuis la barre des menus.</p>
+
+<nav>
+<ol>
+  <li><a href="#installer">Installer</a></li>
+  <li><a href="#configurer">Configurer</a></li>
+  <li><a href="#identifiants">Identifiants AWS</a></li>
+  <li><a href="#dossiers">Dossiers et exclusions</a></li>
+  <li><a href="#planning">Planification</a></li>
+  <li><a href="#menu">Le menu</a></li>
+  <li><a href="#sandbox">Version sandbox</a></li>
+  <li><a href="#problemes">En cas de problème</a></li>
+  <li><a href="#desinstaller">Désinstaller</a></li>
+</ol>
+</nav>
+
+<h2 id="installer">1. Installer</h2>
+<p>Prérequis : macOS 13 ou plus récent, et les outils de développement Apple
+(<code>xcode-select --install</code> si Xcode n'est pas installé).</p>
+<pre><code>git clone https://github.com/jerry42/simple-sync-s3.git
+cd simple-sync-s3
+./scripts/install.sh            # version standard
+./scripts/install.sh --sandbox  # ou : version App Sandbox</code></pre>
+<p>Le script compile l'app, quitte la version en cours s'il y en a une, la copie dans
+<code>/Applications/Simple Sync S3.app</code> et la lance. Une icône de nuage apparaît dans la barre des menus
+(pas d'icône dans le Dock).</p>
+<p>L'app s'appelait auparavant <b>MyDropbox</b>. Si cette version est installée, le script l'arrête et la retire ;
+au premier lancement, Simple Sync S3 reprend sa configuration, son cache de synchro et la clé secrète du trousseau.
+macOS redemande une fois l'accès aux dossiers (nouvelle app pour lui). La version sandbox repart d'une configuration vide.</p>
+<p>Au premier lancement, l'app crée un modèle de configuration et affiche « Configuration à corriger ».</p>
+<p>On peut toujours modifier <code>config.json</code> à la main (menu <b>Ouvrir config.json</b>, puis
+<b>Recharger la configuration</b>, ⌘R) : les réglages conservent les clés qu'ils n'affichent pas.</p>
+
+<h2 id="configurer">2. Configurer</h2>
+<ol>
+  <li>Menu ☁︎ → <b>Réglages…</b> (⌘,).</li>
+  <li>Onglet <b>Compte AWS</b> : profil (le menu « Profils » liste ceux de <code>~/.aws</code>) ou clé d'accès, bucket, région.</li>
+  <li>Onglet <b>Synchro</b> : intervalle, heures fixes, suppressions sur S3, lancement à l'ouverture de session.</li>
+  <li>Onglet <b>Dossiers</b> : « + » ouvre un sélecteur de dossiers ; pour chacun, préfixe S3 et exclusions
+  (une par ligne). Le mode <b>JSON</b> permet de coller ou d'éditer la liste brute.</li>
+  <li><b>Enregistrer</b> (⌘S) : la configuration est vérifiée, écrite dans <code>config.json</code> et rechargée.</li>
+  <li>Menu → <b>Synchroniser maintenant</b> (⌘S) pour un premier essai, puis <b>Ouvrir le journal</b>.</li>
+</ol>
+<pre><code>{
+  "awsProfile": "default",
+  "region": "eu-west-3",
+  "bucket": "mon-bucket",
+  "deleteRemote": false,
+  "launchAtLogin": true,
+  "schedule": { "intervalMinutes": 60, "dailyTimes": ["02:00"], "syncOnLaunch": true },
+  "folders": [
+    { "localPath": "~/Documents/Factures", "s3Prefix": "factures", "exclude": ["*.tmp", "node_modules/"] }
+  ]
+}</code></pre>
+<table>
+  <tr><th>Clé</th><th>Rôle</th></tr>
+  <tr><td><code>bucket</code></td><td>Nom du bucket S3 (obligatoire).</td></tr>
+  <tr><td><code>region</code></td><td>Région du bucket, par exemple <code>eu-west-3</code>. Facultatif avec un profil qui la déclare dans <code>~/.aws/config</code>.</td></tr>
+  <tr><td><code>awsProfile</code></td><td>Profil AWS (voir ci-dessous). Absent : <code>default</code>, sauf si <code>accessKeyId</code> est renseigné.</td></tr>
+  <tr><td><code>accessKeyId</code>, <code>secretAccessKey</code>, <code>sessionToken</code></td><td>Clé d'accès AWS, à la place ou en secours du profil.</td></tr>
+  <tr><td><code>deleteRemote</code></td><td><code>true</code> : un fichier supprimé du Mac est aussi supprimé de S3. <code>false</code> par défaut.</td></tr>
+  <tr><td><code>launchAtLogin</code></td><td><code>true</code> : l'app démarre à l'ouverture de session.</td></tr>
+  <tr><td><code>schedule</code></td><td>Quand synchroniser (voir <a href="#planning">Planification</a>).</td></tr>
+  <tr><td><code>folders</code></td><td>Dossiers à envoyer (voir <a href="#dossiers">Dossiers</a>).</td></tr>
+</table>
+
+<h2 id="identifiants">3. Identifiants AWS</h2>
+<p>Trois façons, au choix. Droits IAM nécessaires sur le bucket : <code>s3:ListBucket</code>,
+<code>s3:PutObject</code>, et <code>s3:DeleteObject</code> si <code>deleteRemote</code> est activé.</p>
+
+<h3>A. Un profil AWS (<code>~/.aws</code>)</h3>
+<p><code>"awsProfile": "mon-profil"</code>. Profils à clés (<code>aws_access_key_id</code> /
+<code>aws_secret_access_key</code>) et profils IAM Identity Center (SSO) sont gérés directement par l'app.
+La version standard sait aussi utiliser <code>credential_process</code> et l'AWS CLI (assume-role…).</p>
+<p><b>Profil SSO</b> : quand la session a expiré, menu → <b>Se connecter à AWS…</b>. Le navigateur s'ouvre
+avec le code pré-rempli (il s'affiche aussi dans le menu) : valide, c'est tout. La session est partagée avec
+l'AWS CLI (un <code>aws sso login</code> fait ailleurs compte aussi) et se renouvelle seule tant que la
+session IAM Identity Center est valable.</p>
+
+<h3>B. Une clé d'accès, clé secrète dans le trousseau (recommandé sans profil)</h3>
+<pre><code>"accessKeyId": "AKIA…",
+"region": "eu-west-3",</code></pre>
+<p>Recharge la configuration, puis menu → <b>Enregistrer la clé secrète AWS…</b> et colle la clé secrète.
+Elle est rangée dans le trousseau macOS, jamais dans un fichier.</p>
+
+<h3>C. Clé d'accès et clé secrète dans <code>config.json</code></h3>
+<pre><code>"accessKeyId": "AKIA…",
+"secretAccessKey": "…",
+"region": "eu-west-3",</code></pre>
+<p>Le plus simple, mais la clé secrète est en clair dans le fichier
+(<code>~/Library/Application Support/SimpleSyncS3/config.json</code>, lisible par ton seul compte).
+Si une clé secrète existe aussi dans le trousseau pour la même clé d'accès, c'est celle du trousseau qui sert.
+Pour des identifiants temporaires, ajoute <code>"sessionToken"</code>.</p>
+
+<div class="note">Avec <code>awsProfile</code> <em>et</em> <code>accessKeyId</code>, le profil passe en premier
+et la clé d'accès sert de secours. La source utilisée est écrite dans le journal à chaque synchro (clé d'accès
+abrégée, jamais la clé secrète).</div>
+
+<h2 id="dossiers">4. Dossiers et exclusions</h2>
+<table>
+  <tr><th>Clé</th><th>Rôle</th></tr>
+  <tr><td><code>localPath</code></td><td>Dossier du Mac. <code>~</code> = ton dossier personnel.</td></tr>
+  <tr><td><code>s3Prefix</code></td><td>« Sous-dossier » dans le bucket. Par défaut : le nom du dossier local. <code>""</code> = racine du bucket.</td></tr>
+  <tr><td><code>exclude</code></td><td>Motifs ignorés, comme dans un <code>.gitignore</code>.</td></tr>
+</table>
+<table>
+  <tr><th>Motif</th><th>Effet</th></tr>
+  <tr><td><code>*.tmp</code></td><td>Tous les fichiers <code>.tmp</code>, à toute profondeur.</td></tr>
+  <tr><td><code>node_modules/</code></td><td>Les dossiers <code>node_modules</code> et leur contenu.</td></tr>
+  <tr><td><code>/brouillons</code></td><td>Seulement <code>brouillons</code> à la racine du dossier.</td></tr>
+  <tr><td><code>docs/**/*.pdf</code></td><td>Les PDF de <code>docs</code> et de ses sous-dossiers.</td></tr>
+  <tr><td><code>!important.log</code></td><td>Ré-inclut un fichier exclu par un motif précédent.</td></tr>
+</table>
+<p><code>.DS_Store</code> et les fichiers <code>._*</code> sont toujours ignorés.</p>
+<p>Un fichier est envoyé s'il manque sur S3 ou s'il a changé. Les fichiers déjà identiques sur S3 ne sont pas
+renvoyés. Fichiers de plus de 5 Go : ignorés pour l'instant.</p>
+<div class="note"><b>Suppressions</b> (<code>deleteRemote</code>) : jamais avec un préfixe vide (tout le bucket),
+jamais si le dossier local est vide ou introuvable (disque débranché), et jamais pour un fichier exclu.</div>
+
+<h2 id="planning">5. Planification</h2>
+<table>
+  <tr><th>Clé</th><th>Rôle</th></tr>
+  <tr><td><code>intervalMinutes</code></td><td>Synchro toutes les N minutes (absent ou 0 : désactivé).</td></tr>
+  <tr><td><code>dailyTimes</code></td><td>Heures fixes <code>"HH:mm"</code>. Une heure manquée pendant la veille est rattrapée au réveil.</td></tr>
+  <tr><td><code>syncOnLaunch</code></td><td>Synchro au démarrage de l'app.</td></tr>
+</table>
+
+<h2 id="menu">6. Le menu</h2>
+<table>
+  <tr><th>Élément</th><th>Effet</th></tr>
+  <tr><td>Synchroniser maintenant / Arrêter (⌘S)</td><td>Lance ou interrompt une synchro.</td></tr>
+  <tr><td>Réglages… (⌘,)</td><td>Fenêtre de configuration (enregistre et recharge <code>config.json</code>).</td></tr>
+  <tr><td>Ouvrir config.json</td><td>Ouvre le fichier dans l'éditeur de texte.</td></tr>
+  <tr><td>Recharger la configuration (⌘R)</td><td>Après une modification à la main de <code>config.json</code>.</td></tr>
+  <tr><td>Ouvrir le journal</td><td>Détail des envois, suppressions et erreurs.</td></tr>
+  <tr><td>Enregistrer la clé secrète AWS…</td><td>Range la clé secrète dans le trousseau (ou l'en retire).</td></tr>
+  <tr><td>Se connecter à AWS…</td><td>Profils SSO uniquement : connexion par le navigateur.</td></tr>
+  <tr><td>Autoriser l'accès…</td><td>Version sandbox uniquement : autoriser <code>~/.aws</code> et les dossiers.</td></tr>
+  <tr><td>Aide</td><td>Cette page.</td></tr>
+</table>
+<p>Pendant une synchro, la première ligne indique le dossier en cours, le pourcentage et le nombre de fichiers
+traités (ex. « Dropbox : 37 % (1250 / 3400) »). L'icône change pendant une synchro, et affiche un point
+d'exclamation en cas d'erreur.</p>
+
+<h2 id="sandbox">7. Version sandbox</h2>
+<p>Installée avec <code>./scripts/install.sh --sandbox</code>, l'app est enfermée par macOS : elle ne voit que
+les dossiers que tu lui montres.</p>
+<ul>
+  <li>Le menu indique « Accès à autoriser : N dossier(s) ». Clique <b>Autoriser l'accès…</b> : pour chaque dossier,
+  un panneau s'ouvre déjà placé dessus ; clique <b>Autoriser</b>. À faire une seule fois. Un dossier ajouté avec
+  « + » dans les réglages est autorisé directement.</li>
+  <li><code>~/.aws</code> n'est demandé que si tu utilises un profil.</li>
+  <li><code>credential_process</code> et l'AWS CLI ne sont pas disponibles : utilise un profil à clés, un profil SSO,
+  ou une clé d'accès.</li>
+  <li>Ses fichiers sont à part, dans <code>~/Library/Containers/com.jerry42.SimpleSyncS3/Data/Library/</code>
+  (configuration dans <code>Application Support/SimpleSyncS3</code>, journal dans <code>Logs/SimpleSyncS3</code>).
+  La configuration de la version standard n'est pas reprise : recopie-la, ou passe par « Réglages… ».</li>
+</ul>
+
+<h2 id="problemes">8. En cas de problème</h2>
+<p>Commence toujours par <b>Ouvrir le journal</b> : chaque synchro y écrit la source des identifiants et la
+raison de chaque erreur.</p>
+<table>
+  <tr><th>Message</th><th>Que faire</th></tr>
+  <tr><td>Configuration à corriger</td><td>Le message indique la clé en cause (bucket, dossier, heure mal écrite, virgule JSON…).</td></tr>
+  <tr><td>Connexion IAM Identity Center requise</td><td>Menu → Se connecter à AWS…</td></tr>
+  <tr><td>Aucune clé secrète pour la clé d'accès</td><td>Menu → Enregistrer la clé secrète AWS…, ou <code>secretAccessKey</code> dans <code>config.json</code>.</td></tr>
+  <tr><td>Région AWS inconnue</td><td>Ajoute <code>"region"</code> dans <code>config.json</code>.</td></tr>
+  <tr><td>S3 HTTP 403 – AccessDenied</td><td>Droits IAM insuffisants sur le bucket, ou mauvais compte.</td></tr>
+  <tr><td>S3 HTTP 301 / PermanentRedirect</td><td>La région ne correspond pas à celle du bucket.</td></tr>
+  <tr><td>Accès non autorisé (sandbox)</td><td>Menu → Autoriser l'accès…</td></tr>
+  <tr><td>macOS redemande l'accès à Documents ou au trousseau après une mise à jour</td><td>L'app est signée « ad hoc ».
+  Une seule fois : <code>./scripts/create-signing-cert.sh</code> puis <code>./scripts/install.sh</code> ;
+  les autorisations sont ensuite gardées d'une version à l'autre.</td></tr>
+</table>
+<p>Test sans l'interface, avec une configuration à part :</p>
+<pre><code>swift run s5-sync --config ~/s5-test/config.json [--login]</code></pre>
+
+<h2 id="desinstaller">9. Désinstaller</h2>
+<ol>
+  <li>Mets <code>"launchAtLogin": false</code>, recharge la configuration, puis quitte l'app.</li>
+  <li>Supprime <code>/Applications/Simple Sync S3.app</code>.</li>
+  <li>Facultatif : <code>~/Library/Application Support/SimpleSyncS3</code>, <code>~/Library/Logs/SimpleSyncS3</code>,
+  <code>~/Library/Containers/com.jerry42.SimpleSyncS3</code> (version sandbox), et l'élément « SimpleSyncS3 » du trousseau.
+  Après un passage depuis l'ancien nom, les mêmes éléments « MyDropbox » peuvent aussi être supprimés.</li>
+</ol>
+<p>Rien n'est jamais supprimé de S3 par la désinstallation.</p>
+</main>
+</body>
+</html>
