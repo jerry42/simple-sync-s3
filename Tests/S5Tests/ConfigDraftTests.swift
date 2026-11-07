@@ -78,7 +78,7 @@ final class ConfigDraftTests: XCTestCase {
 
     func testIncompleteFileStillOpensButDoesNotValidate() throws {
         let draft = try ConfigDraft(data: Data(ConfigStore.template.utf8))
-        XCTAssertEqual(draft.bucket, "mon-bucket")
+        XCTAssertEqual(draft.bucket, "my-bucket")
         XCTAssertThrowsError(try draft.validate())
 
         let empty = try ConfigDraft(data: Data("{}".utf8))

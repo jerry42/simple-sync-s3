@@ -15,10 +15,10 @@ enum S3Error: LocalizedError {
         switch self {
         case .http(let code, let body):
             let message = S3Error.extract(tag: "Message", from: body) ?? body
-            let s3Code = S3Error.extract(tag: "Code", from: body).map { "\($0) : " } ?? ""
+            let s3Code = S3Error.extract(tag: "Code", from: body).map { "\($0): " } ?? ""
             return "S3 HTTP \(code) – \(s3Code)\(message.prefix(300))"
         case .invalidResponse:
-            return "Réponse S3 invalide"
+            return L10n.tr("Invalid S3 response")
         }
     }
 

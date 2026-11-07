@@ -56,7 +56,7 @@ final class CredentialResolutionTests: XCTestCase {
         let result = try provider(profile: "perso", staticKey: key(), store: storeWithSecret).resolve()
         XCTAssertEqual(result.source, .profile("perso"))
         XCTAssertEqual(result.credentials.accessKeyId, "AKIDPROFILE")
-        XCTAssertTrue(logs.contains { $0.contains("profil « perso »") })
+        XCTAssertTrue(logs.contains { $0.contains("profile “perso”") })
     }
 
     func testFallsBackToKeychainWhenProfileFails() throws {
@@ -66,8 +66,8 @@ final class CredentialResolutionTests: XCTestCase {
         XCTAssertEqual(result.credentials.accessKeyId, accessKeyId)
         XCTAssertEqual(result.credentials.secretAccessKey, keychainSecret)
         XCTAssertEqual(result.credentials.sessionToken, "jeton")
-        XCTAssertTrue(logs.contains { $0.contains("~/.aws illisible") && $0.contains("bascule") })
-        XCTAssertTrue(logs.contains { $0.contains("AKIA…MPLE") && $0.contains("trousseau") })
+        XCTAssertTrue(logs.contains { $0.contains("~/.aws illisible") && $0.contains("falling back") })
+        XCTAssertTrue(logs.contains { $0.contains("AKIA…MPLE") && $0.contains("Keychain") })
     }
 
     func testAccessKeyAloneSkipsProfile() throws {
@@ -86,7 +86,7 @@ final class CredentialResolutionTests: XCTestCase {
         let result = try provider(profile: "perso", profileWorks: false, staticKey: key(plain: plainSecret)).resolve()
         XCTAssertEqual(result.source, .configFile)
         XCTAssertEqual(result.credentials.secretAccessKey, plainSecret)
-        XCTAssertTrue(logs.contains { $0.contains("en clair") })
+        XCTAssertTrue(logs.contains { $0.contains("plain text") })
     }
 
     func testAccessKeyAndSecretFromConfigJSON() throws {
@@ -117,16 +117,16 @@ final class CredentialResolutionTests: XCTestCase {
     func testNoSecretAnywhereIsAClearError() {
         XCTAssertThrowsError(try provider(profile: "perso", profileWorks: false, staticKey: key()).resolve()) { error in
             let message = error.localizedDescription
-            XCTAssertTrue(message.contains("profil « perso »"), message)
+            XCTAssertTrue(message.contains("profile “perso”"), message)
             XCTAssertTrue(message.contains("AKIA…MPLE"), message)
-            XCTAssertTrue(message.contains("Enregistrer la clé secrète AWS"), message)
+            XCTAssertTrue(message.contains("Save AWS Secret Key"), message)
         }
     }
 
     func testKeychainErrorIsReportedWhenNothingElseWorks() {
         let store = FakeSecretStore(failure: KeychainError(status: errSecInteractionNotAllowed))
         XCTAssertThrowsError(try provider(profile: nil, staticKey: key(), store: store).resolve()) { error in
-            XCTAssertTrue(error.localizedDescription.contains("trousseau"), error.localizedDescription)
+            XCTAssertTrue(error.localizedDescription.contains("Keychain"), error.localizedDescription)
         }
     }
 

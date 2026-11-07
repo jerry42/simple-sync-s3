@@ -20,9 +20,10 @@ public struct SyncReport: Sendable {
     }
 
     public var summary: String {
-        var parts = ["\(uploaded) envoyé(s)", "\(deleted) supprimé(s)", "\(unchanged) inchangé(s)"]
-        if !errors.isEmpty { parts.append("\(errors.count) erreur(s)") }
-        if cancelled { parts.append("interrompue") }
+        var parts = [L10n.tr("%lld uploaded", uploaded), L10n.tr("%lld deleted", deleted),
+                     L10n.tr("%lld unchanged", unchanged)]
+        if !errors.isEmpty { parts.append(L10n.tr("%lld error(s)", errors.count)) }
+        if cancelled { parts.append(L10n.tr("interrupted")) }
         return parts.joined(separator: ", ")
     }
 }
@@ -36,13 +37,13 @@ enum SyncError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingRegion:
-            return "Région AWS inconnue : ajoute \"region\" dans config.json (ou dans ~/.aws/config pour le profil)."
+            return L10n.tr("Unknown AWS region: add \"region\" to config.json (or to ~/.aws/config for the profile).")
         case .folderMissing(let path):
-            return "Dossier introuvable : \(path) (ignoré, rien n'est supprimé sur S3)"
+            return L10n.tr("Folder not found: %@ (skipped, nothing is deleted from S3)", path)
         case .folderNotAuthorized(let path):
-            return "Accès non autorisé (sandbox) : \(path) (menu « Autoriser l'accès… » ; rien n'est supprimé sur S3)"
+            return L10n.tr("Access not granted (sandbox): %@ (“Grant Access…” menu; nothing is deleted from S3)", path)
         case .fileTooLarge(let path):
-            return "Fichier de plus de 5 Go non géré pour l'instant : \(path)"
+            return L10n.tr("Files over 5 GB are not supported yet: %@", path)
         }
     }
 }
@@ -74,7 +75,7 @@ public final class SyncEngine {
             do {
                 report.merge(try await sync(folder: folder))
             } catch {
-                report.errors.append("\(folder.localPath) : \(error.localizedDescription)")
+                report.errors.append(L10n.tr("%@: %@", folder.localPath, error.localizedDescription))
             }
             state.save()
         }
@@ -106,10 +107,10 @@ public final class SyncEngine {
         // Messages de progression courts et de forme fixe (dossier + compteur, jamais le nom d'un fichier) :
         // ils s'affichent dans le menu, dont la largeur suit le texte.
         let name = URL(fileURLWithPath: rootPath).lastPathComponent
-        progress("\(name) : analyse…")
+        progress(L10n.tr("%@: scanning…", name))
         let local = scanLocal(rootPath: rootPath, excludes: excludes)
         let remote = try await client.listObjects(prefix: prefix)
-        Log.info("\(folder.localPath) → s3://\(config.bucket)/\(prefix) : \(local.count) fichier(s) local(aux), \(remote.count) objet(s) distant(s)")
+        Log.info("\(folder.localPath) → s3://\(config.bucket)/\(prefix): \(local.count) local file(s), \(remote.count) remote object(s)")
 
         // Envois
         for (index, (rel, file)) in local.sorted(by: { $0.key < $1.key }).enumerated() {
@@ -128,8 +129,8 @@ public final class SyncEngine {
                 }
             } catch {
                 if Task.isCancelled { report.cancelled = true; return report }
-                Log.info("Erreur \(key) : \(error.localizedDescription)")
-                report.errors.append("\(rel) : \(error.localizedDescription)")
+                Log.info("Error \(key): \(error.localizedDescription)")
+                report.errors.append(L10n.tr("%@: %@", rel, error.localizedDescription))
             }
         }
 
@@ -138,11 +139,11 @@ public final class SyncEngine {
         // Suppressions (uniquement si activé)
         guard config.deleteRemote else { return report }
         if prefix.isEmpty {
-            Log.info("Suppression désactivée pour \(folder.localPath) : préfixe S3 vide (protégerait tout le bucket).")
+            Log.info("Deletion disabled for \(folder.localPath): empty S3 prefix (would cover the whole bucket).")
             return report
         }
         if local.isEmpty && !remote.isEmpty {
-            Log.info("Suppression ignorée pour \(folder.localPath) : dossier local vide, par sécurité.")
+            Log.info("Deletion skipped for \(folder.localPath): local folder is empty, for safety.")
             return report
         }
         let localKeys = Set(local.keys.map { prefix + $0 })
@@ -152,13 +153,13 @@ public final class SyncEngine {
             if rel.isEmpty || rel.hasSuffix("/") { continue }
             if excludes.isExcluded(rel, isDirectory: false) { continue }
             do {
-                progress("\(name) : suppressions…")
+                progress(L10n.tr("%@: deleting…", name))
                 try await client.deleteObject(key: key)
                 state.remove(bucket: config.bucket, key: key)
                 Log.info("✕ \(key)")
                 report.deleted += 1
             } catch {
-                report.errors.append("suppression \(rel) : \(error.localizedDescription)")
+                report.errors.append(L10n.tr("delete %@: %@", rel, error.localizedDescription))
             }
         }
         return report

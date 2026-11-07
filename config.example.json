@@ -2,7 +2,7 @@
   "awsProfile": "default",
   "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
   "region": "eu-west-3",
-  "bucket": "mon-bucket",
+  "bucket": "my-bucket",
   "deleteRemote": false,
   "launchAtLogin": false,
   "schedule": {
@@ -12,8 +12,8 @@
   },
   "folders": [
     {
-      "localPath": "~/Documents/Factures",
-      "s3Prefix": "factures",
+      "localPath": "~/Documents/Invoices",
+      "s3Prefix": "invoices",
       "exclude": ["*.tmp", "node_modules"]
     }
   ]

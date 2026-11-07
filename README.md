@@ -14,9 +14,7 @@ A small macOS menu bar app that backs up chosen local folders to an Amazon S3 bu
 - **No dependencies.** Pure Swift / SwiftUI; the S3 client (SigV4) and the SSO login are written by hand
   on top of `URLSession` and CryptoKit.
 - Optional **App Sandbox** build.
-
-> **Language note:** the app's interface, log messages and built-in help page are currently in **French**.
-> This README gives the French menu labels with an English translation, e.g. **Réglages…** (Settings…).
+- **English and French.** The interface and the built-in help follow the macOS language (see [Languages](#languages)).
 
 ## Contents
 
@@ -31,6 +29,7 @@ A small macOS menu bar app that backs up chosen local folders to an Amazon S3 bu
 - [Costs and large folders](#costs-and-large-folders)
 - [Sandboxed build](#sandboxed-build)
 - [Command-line sync](#command-line-sync)
+- [Languages](#languages)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
 - [Limitations](#limitations)
@@ -99,32 +98,31 @@ open "build/Simple Sync S3.app"
 On first launch the app creates a template at
 `~/Library/Application Support/SimpleSyncS3/config.json`. Then:
 
-1. Click the menu bar icon → **Réglages…** (Settings…, ⌘,).
-2. **Compte AWS** (AWS account) tab: pick a profile from `~/.aws` (the **Profils** menu lists them), or enter
+1. Click the menu bar icon → **Settings…** (⌘,).
+2. **AWS Account** tab: pick a profile from `~/.aws` (the **Profiles** menu lists them), or enter
    an access key; then the bucket name and its region.
-3. **Synchro** tab: interval, fixed times, whether to mirror deletions, launch at login.
-4. **Dossiers** (Folders) tab: **+** opens a folder picker. For each folder, set the S3 prefix and exclusions
+3. **Sync** tab: interval, fixed times, whether to mirror deletions, launch at login.
+4. **Folders** tab: **+** opens a folder picker. For each folder, set the S3 prefix and exclusions
    (one per line). A JSON mode lets you paste or edit the raw list.
-5. **Enregistrer** (Save, ⌘S): the configuration is validated, written to `config.json` and reloaded.
+5. **Save** (⌘S): the configuration is validated, written to `config.json` and reloaded.
 
-If you use an access key, click **Clé secrète…** (Secret key…) in the settings, or the menu item
-**Enregistrer la clé secrète AWS…**, to store the secret in the Keychain.
+If you use an access key, click **Secret Key…** in the settings, or the menu item
+**Save AWS Secret Key…**, to store the secret in the Keychain.
 
 If you use an IAM Identity Center (SSO) profile and are not logged in, the menu shows
-**Se connecter à AWS…** (Sign in to AWS…), see [IAM Identity Center](#iam-identity-center-sso).
+**Sign In to AWS…**, see [IAM Identity Center](#iam-identity-center-sso).
 
-The first sync starts according to your schedule, or right away with **Synchroniser maintenant** (Sync now).
+The first sync starts according to your schedule, or right away with **Sync Now** (⌘S).
 While it runs, the first menu line shows the current folder, a percentage and a file count,
-e.g. `Photos : 37 % (1250 / 3400)`.
+e.g. `Photos: 37% (1250 / 3400)`.
 
-Other menu items: **Ouvrir config.json** (open the file in a text editor), **Recharger la configuration**
-(reload, ⌘R, after editing the file by hand), **Ouvrir le journal** (open the log), **Aide** (built-in help page,
-in French), **Quitter Simple Sync S3** (quit).
+Other menu items: **Open config.json** (open the file in a text editor), **Reload Configuration**
+(⌘R, after editing the file by hand), **Open Log**, **Help** (built-in help page), **Quit Simple Sync S3**.
 
 ## Configuration reference
 
 You can edit `~/Library/Application Support/SimpleSyncS3/config.json` directly instead of using the settings
-window; the window keeps any keys it does not show. After editing by hand, use **Recharger la configuration**
+window; the window keeps any keys it does not show. After editing by hand, use **Reload Configuration**
 (the file is also re-read before each sync). See [`config.example.json`](config.example.json).
 
 ```json
@@ -221,7 +219,7 @@ aws_secret_access_key = ...
 { "accessKeyId": "AKIA...", "region": "eu-west-3", "bucket": "my-backup-bucket", "folders": [...] }
 ```
 
-Then **Clé secrète…** in the settings (or the menu item **Enregistrer la clé secrète AWS…**) and paste the
+Then **Secret Key…** in the settings (or the menu item **Save AWS Secret Key…**) and paste the
 secret. The app creates the Keychain item itself, so it can read it back without prompting. Keep `awsProfile`
 as well if you want the profile to have priority and the key to act as a fallback.
 
@@ -237,7 +235,7 @@ token refresh) and the legacy format (`sso_start_url` / `sso_region` in the prof
 - The token is read from `~/.aws/sso/cache`, the same cache as the AWS CLI: an `aws sso login` done elsewhere
   works for Simple Sync S3 too, and vice versa.
 - An expired token is refreshed automatically when a refresh token exists (`sso_session` format).
-- Otherwise, use **Se connecter à AWS…** in the menu: your browser opens the IAM Identity Center page with the
+- Otherwise, use **Sign In to AWS…** in the menu: your browser opens the IAM Identity Center page with the
   code pre-filled (the code is also shown in the menu and the log). Approve it and the next sync proceeds.
   From the command line: `s5-sync --config … --login`.
 - Role credentials stay in memory and are never written to disk.
@@ -286,7 +284,7 @@ together with a lifecycle rule that expires old versions after some days, and ke
 - S3 objects are deleted only if `deleteRemote` is `true`, and never when the prefix is empty (whole bucket) or
   the local folder is empty or missing.
 - Symbolic links are skipped; only regular files are uploaded.
-- Log: `~/Library/Logs/SimpleSyncS3/sync.log` (menu **Ouvrir le journal**).
+- Log: `~/Library/Logs/SimpleSyncS3/sync.log` (menu **Open Log**).
 - Config, cache and state live in `~/Library/Application Support/SimpleSyncS3/`.
 
 ## Costs and large folders
@@ -316,8 +314,8 @@ outbound network, user-selected files (read/write) and security-scoped bookmarks
 the sandbox at launch (`(sandbox)` in the log). Differences:
 
 - **Folder access.** A sandboxed app only reads what you showed it. The menu shows
-  **Accès à autoriser : N dossier(s)** (Access needed) and **Autoriser l'accès…** (Grant access…): a panel
-  opens on `~/.aws` (if a profile is configured) then on each synced folder; click **Autoriser**. Only once:
+  **Folders needing access: N** and **Grant Access…**: a panel
+  opens on `~/.aws` (if a profile is configured) then on each synced folder; click **Allow**. Only once:
   grants are kept as bookmarks. Choosing a parent folder covers its subfolders. A folder added with **+** in the
   settings is granted directly. A folder without access is skipped (nothing is deleted from S3).
 - `~/.aws` is read for profiles and written for the SSO cache (shared with the AWS CLI).
@@ -346,6 +344,28 @@ swift build -c release
 It never touches `~/Library/Application Support/SimpleSyncS3`. The log goes to the terminal and to
 `~/Library/Logs/SimpleSyncS3/sync.log`.
 
+## Languages
+
+The app is available in **English** and **French**. It follows the macOS language: French when French comes
+first in System Settings → General → Language & Region, English otherwise (including for languages the app
+does not support). To pick a language for this app only, add it under **Applications** in the same pane
+(Language & Region → Applications → +), then relaunch the app.
+
+What is translated: menus, the settings window, alerts, status and error messages, the folder access prompts
+and the built-in help page. Log messages are written in English, with error details in the interface language.
+The `s5-sync` command-line tool prints English.
+
+Translations live in `Resources/<language>.lproj/` and are copied into the app by `scripts/build-app.sh`:
+
+- `Localizable.strings`: the keys are the English texts used in the code (SwiftUI `Text("…")` literals and
+  `L10n.tr("…")` in `S5Core`), mapped to the translation. Keep the `%@` / `%lld` placeholders in the same order.
+- `InfoPlist.strings`: the folder access prompts from `Info.plist`.
+- `Help.html`: the help page opened by the **Help** menu item.
+
+To add a language, create `Resources/<code>.lproj/` with these three files (start from `fr.lproj`) and add the
+code to `CFBundleLocalizations` in `Resources/Info.plist`. `swift run` has no app bundle, so it always shows
+English; build the app with `./scripts/build-app.sh` to see a translation.
+
 ## Troubleshooting
 
 | Symptom | What to do |
@@ -354,17 +374,17 @@ It never touches `~/Library/Application Support/SimpleSyncS3`. The log goes to t
 | The sync seems stuck at the start | A macOS permission prompt is probably waiting, sometimes behind other windows. Answer it. If you clicked "Don't Allow", re-enable Simple Sync S3 in System Settings → Privacy & Security → Files and Folders (or Full Disk Access). |
 | macOS asks for Keychain access | Click "Always Allow". If it comes back after every update, see the signing certificate above, or store the secret again from the menu. |
 | "credentials" / "profile" error in the menu | The menu lists each source tried and why it failed. Check the profile name, `aws sts get-caller-identity --profile <name>`, and that the region matches the bucket. |
-| SSO token expired | Menu → **Se connecter à AWS…**, or `aws sso login --profile <name>`. |
+| SSO token expired | Menu → **Sign In to AWS…**, or `aws sso login --profile <name>`. |
 | `AccessDenied` (403) | The IAM policy does not cover this bucket or prefix, or `s3:DeleteObject` is missing with `deleteRemote`. Check the S3 key shown in the log against your policy. |
 | `PermanentRedirect` / region error | `region` does not match the bucket's region. |
 | A file is never uploaded | It may match an exclusion (built-in ones include `.DS_Store` and `._*`) or be a symbolic link. Files over 5 GB are reported as errors in the log (see Limitations). |
-| Changes to `config.json` are ignored | Use **Recharger la configuration** (⌘R). If the file is invalid JSON the settings window shows the error. |
+| Changes to `config.json` are ignored | Use **Reload Configuration** (⌘R). If the file is invalid JSON the settings window shows the error. |
 | Where are the logs? | `~/Library/Logs/SimpleSyncS3/sync.log` (sandboxed build: inside the container, see above). |
 
 ## Development
 
 ```bash
-swift run                # run the menu bar app from the terminal, logs in the terminal
+swift run                # run the menu bar app from the terminal (English only), logs in the terminal
 swift test               # unit tests, never call AWS
 open Package.swift       # or open the package in Xcode
 ```
@@ -373,6 +393,7 @@ open Package.swift       # or open the package in Xcode
   exclusions, sync engine).
 - `Sources/SimpleSyncS3`: the SwiftUI menu bar app and settings window.
 - `Sources/s5-sync`: the command-line target.
+- `Resources`: `Info.plist`, entitlements, and one `<language>.lproj` folder per language (see [Languages](#languages)).
 - `Tests/S5Tests`: SigV4 is checked against the examples from the AWS documentation and values computed
   by botocore; SSO uses a fake HTTP transport.
 
@@ -381,7 +402,6 @@ open Package.swift       # or open the package in Xcode
 - Files larger than 5 GB are skipped (no multipart upload yet).
 - One-way only: nothing is restored from S3. Use the AWS console, the AWS CLI (`aws s3 sync s3://bucket/prefix ./restore`)
   or any S3 client to get files back.
-- Interface in French only for now.
 - Not notarized: build it yourself as described above.
 
 ## License

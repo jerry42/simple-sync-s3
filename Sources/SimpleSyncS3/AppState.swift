@@ -4,7 +4,7 @@ import ServiceManagement
 
 @MainActor
 final class AppState: ObservableObject {
-    @Published private(set) var status = "Prêt"
+    @Published private(set) var status = L10n.tr("Ready")
     @Published private(set) var isSyncing = false
     @Published private(set) var lastSync: Date?
     @Published private(set) var lastReport: SyncReport?
@@ -28,18 +28,18 @@ final class AppState: ObservableObject {
     private var configDate: Date?
 
     init() {
-        Log.info("Démarrage de Simple Sync S3" + (Sandbox.isActive ? " (sandbox)" : ""))
+        Log.info("Starting Simple Sync S3" + (Sandbox.isActive ? " (sandbox)" : ""))
         // Avant tout accès à la configuration ou aux autorisations (AccessGrants.shared).
         ConfigStore.migrateLegacyDirectory()
         if Sandbox.isActive {
-            for failure in AccessGrants.shared.activateAll() { Log.info("Autorisation d'accès : \(failure)") }
+            for failure in AccessGrants.shared.activateAll() { Log.info("Access grant: \(failure)") }
         }
         reloadConfig()
         timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
         }
         if config?.schedule.syncOnLaunch == true {
-            startSync(reason: "démarrage")
+            startSync(reason: "launch")
         }
     }
 
@@ -48,21 +48,21 @@ final class AppState: ObservableObject {
     func syncNowOrCancel() {
         if isSyncing {
             syncTask?.cancel()
-            status = "Arrêt en cours…"
+            status = L10n.tr("Stopping…")
             return
         }
         reloadConfigIfChanged()
         guard config != nil else {
-            let message = configError ?? "Configuration absente"
-            Log.info("Synchro manuelle impossible : \(message)")
+            let message = configError ?? L10n.tr("No configuration")
+            Log.info("Manual sync not possible: \(message)")
             // Laisse le menu se refermer avant d'ouvrir une fenêtre modale.
             DispatchQueue.main.async {
-                self.showAlert("Synchro impossible : configuration à corriger",
-                               message + "\n\nCorrige la configuration (menu « Réglages… ») puis relance la synchro.")
+                self.showAlert(L10n.tr("Can’t sync: the configuration needs fixing"),
+                               message + "\n\n" + L10n.tr("Fix the configuration (“Settings…” menu), then sync again."))
             }
             return
         }
-        startSync(reason: "manuelle")
+        startSync(reason: "manual")
     }
 
     /// Recharge config.json s'il a été modifié depuis le dernier chargement (avant chaque synchro,
@@ -81,13 +81,13 @@ final class AppState: ObservableObject {
             let loaded = try ConfigStore.load()
             config = loaded
             configError = nil
-            status = "Prêt"
+            status = L10n.tr("Ready")
             applyLaunchAtLogin(loaded.launchAtLogin)
-            Log.info("Configuration chargée : \(loaded.folders.count) dossier(s) → s3://\(loaded.bucket)")
+            Log.info("Configuration loaded: \(loaded.folders.count) folder(s) → s3://\(loaded.bucket)")
         } catch {
             config = nil
             configError = error.localizedDescription
-            status = "Configuration à corriger"
+            status = L10n.tr("Configuration needs fixing")
             Log.info(error.localizedDescription)
         }
         refreshAccess()
@@ -112,8 +112,8 @@ final class AppState: ObservableObject {
             // Un dossier choisi plus tôt (un parent par exemple) peut déjà couvrir celui-ci.
             if AccessGrants.shared.covers(path) { continue }
             let panel = NSOpenPanel()
-            panel.message = "Simple Sync S3 a besoin d'accéder à « \(path) ». Sélectionne ce dossier puis clique « Autoriser »."
-            panel.prompt = "Autoriser"
+            panel.message = L10n.tr("Simple Sync S3 needs access to “%@”. Select this folder, then click “Allow”.", path)
+            panel.prompt = L10n.tr("Allow")
             panel.canChooseDirectories = true
             panel.canChooseFiles = false
             panel.allowsMultipleSelection = false
@@ -123,15 +123,15 @@ final class AppState: ObservableObject {
             guard panel.runModal() == .OK, let url = panel.url else { break }
             do {
                 try AccessGrants.shared.grant(url)
-                Log.info("Accès autorisé : \(url.path)")
+                Log.info("Access granted: \(url.path)")
             } catch {
-                Log.info("Autorisation impossible pour \(url.path) : \(error.localizedDescription)")
-                showAlert("Autorisation impossible", error.localizedDescription)
+                Log.info("Could not grant access to \(url.path): \(error.localizedDescription)")
+                showAlert(L10n.tr("Could not grant access"), error.localizedDescription)
             }
         }
         refreshAccess()
         if !missingAccess.isEmpty {
-            Log.info("Toujours sans accès : " + missingAccess.joined(separator: ", "))
+            Log.info("Still without access: " + missingAccess.joined(separator: ", "))
         }
     }
 
@@ -147,15 +147,15 @@ final class AppState: ObservableObject {
         let flag = CancelFlag()
         loginCancel = flag
         isLoggingIn = true
-        status = "Connexion à AWS…"
+        status = L10n.tr("Signing in to AWS…")
         // Attente bloquante (jusqu'à la validation dans le navigateur) : hors du pool de tâches Swift.
         DispatchQueue.global(qos: .userInitiated).async {
             let result = Result<Void, Error> {
                 try SSOLogin.login(profile: profile, open: { authorization in
-                    Log.info("Connexion IAM Identity Center : code \(authorization.userCode), "
-                             + "à valider sur \(authorization.verificationURL.absoluteString)")
+                    Log.info("IAM Identity Center sign-in: code \(authorization.userCode), "
+                             + "to approve at \(authorization.verificationURL.absoluteString)")
                     Task { @MainActor in
-                        self.status = "Code \(authorization.userCode) : valide-le dans le navigateur"
+                        self.status = L10n.tr("Code %@: approve it in your browser", authorization.userCode)
                         NSWorkspace.shared.open(authorization.verificationURL)
                     }
                 }, isCancelled: { flag.isCancelled })
@@ -170,11 +170,11 @@ final class AppState: ObservableObject {
         isLoggingIn = false
         switch result {
         case .success:
-            status = "Connecté à AWS"
+            status = L10n.tr("Signed in to AWS")
         case .failure(let error):
             Log.info(error.localizedDescription)
-            status = cancelled ? "Connexion AWS annulée" : "Connexion AWS échouée"
-            if !cancelled { showAlert("Connexion à AWS", error.localizedDescription) }
+            status = cancelled ? L10n.tr("AWS sign-in cancelled") : L10n.tr("AWS sign-in failed")
+            if !cancelled { showAlert(L10n.tr("AWS Sign-In"), error.localizedDescription) }
         }
     }
 
@@ -204,10 +204,10 @@ final class AppState: ObservableObject {
     private func runSecretKeyAlert(accessKeyId explicit: String?) {
         guard let accessKeyId = explicit ?? config?.accessKeyId else {
             if config == nil {
-                showAlert("Configuration à corriger", configError ?? "Configuration absente")
+                showAlert(L10n.tr("Configuration needs fixing"), configError ?? L10n.tr("No configuration"))
             } else {
-                showAlert("Aucune clé d'accès configurée",
-                          "Renseigne la clé d'accès dans « Réglages… » (onglet Compte AWS), puis enregistre.")
+                showAlert(L10n.tr("No access key configured"),
+                          L10n.tr("Enter the access key in “Settings…” (AWS Account tab), then save."))
             }
             return
         }
@@ -215,16 +215,16 @@ final class AppState: ObservableObject {
         let exists = store.hasSecret(for: accessKeyId)
 
         let alert = NSAlert()
-        alert.messageText = "Clé secrète AWS"
-        alert.informativeText = "Clé d'accès : \(accessKeyId)\n"
-            + (exists ? "Une clé secrète est déjà dans le trousseau ; la saisie la remplace."
-                      : "La clé secrète sera enregistrée dans le trousseau macOS.")
+        alert.messageText = L10n.tr("AWS Secret Key")
+        alert.informativeText = L10n.tr("Access key: %@", accessKeyId) + "\n"
+            + (exists ? L10n.tr("A secret key is already in the Keychain; what you enter replaces it.")
+                      : L10n.tr("The secret key will be saved in the macOS Keychain."))
         let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
-        field.placeholderString = "Clé secrète"
+        field.placeholderString = L10n.tr("Secret key")
         alert.accessoryView = field
-        alert.addButton(withTitle: "Enregistrer")
-        alert.addButton(withTitle: "Annuler")
-        if exists { alert.addButton(withTitle: "Supprimer la clé du trousseau") }
+        alert.addButton(withTitle: L10n.tr("Save"))
+        alert.addButton(withTitle: L10n.tr("Cancel"))
+        if exists { alert.addButton(withTitle: L10n.tr("Delete Key from Keychain")) }
         alert.window.initialFirstResponder = field
         NSApp.activate(ignoringOtherApps: true)
 
@@ -235,18 +235,18 @@ final class AppState: ObservableObject {
                 let secret = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !secret.isEmpty else { return }
                 try store.save(secret, for: accessKeyId)
-                status = "Clé secrète enregistrée"
-                Log.info("Clé secrète enregistrée dans le trousseau pour \(masked)")
+                status = L10n.tr("Secret key saved")
+                Log.info("Secret key saved in the Keychain for \(masked)")
             case .alertThirdButtonReturn:
                 try store.delete(for: accessKeyId)
-                status = "Clé secrète supprimée"
-                Log.info("Clé secrète supprimée du trousseau pour \(masked)")
+                status = L10n.tr("Secret key deleted")
+                Log.info("Secret key deleted from the Keychain for \(masked)")
             default:
                 break
             }
         } catch {
             Log.info(error.localizedDescription)
-            showAlert("Trousseau", error.localizedDescription)
+            showAlert(L10n.tr("Keychain"), error.localizedDescription)
         }
     }
 
@@ -272,14 +272,14 @@ final class AppState: ObservableObject {
     private func startSync(reason: String) {
         guard !isSyncing else { return }
         guard let config else {
-            status = configError ?? "Configuration absente"
-            Log.info("Synchro (\(reason)) impossible : \(status)")
+            status = configError ?? L10n.tr("No configuration")
+            Log.info("Sync (\(reason)) not possible: \(status)")
             return
         }
         isSyncing = true
         scheduler.didStartSync()
-        status = "Synchronisation…"
-        Log.info("Synchro lancée (\(reason))")
+        status = L10n.tr("Syncing…")
+        Log.info("Sync started (\(reason))")
 
         // AppState vit aussi longtemps que l'app : la capture forte de self est sans conséquence.
         // Au plus une mise à jour toutes les 2 s : chaque changement redessine le menu ouvert.
@@ -311,8 +311,8 @@ final class AppState: ObservableObject {
         syncTask = nil
         lastSync = Date()
         lastReport = report
-        status = report.errors.isEmpty ? "À jour" : "Terminé avec des erreurs"
-        Log.info("Synchro terminée : \(report.summary)")
+        status = report.errors.isEmpty ? L10n.tr("Up to date") : L10n.tr("Finished with errors")
+        Log.info("Sync finished: \(report.summary)")
         for error in report.errors { Log.info("  • \(error)") }
     }
 
@@ -329,7 +329,7 @@ final class AppState: ObservableObject {
                 try service.unregister()
             }
         } catch {
-            Log.info("Lancement à l'ouverture de session : \(error.localizedDescription)")
+            Log.info("Launch at login: \(error.localizedDescription)")
         }
     }
 }

@@ -5,9 +5,10 @@ import S5Core
 @MainActor
 final class SettingsModel: ObservableObject {
     enum FolderMode: String, CaseIterable, Identifiable {
-        case list = "Liste"
-        case json = "JSON"
+        case list
+        case json
         var id: String { rawValue }
+        var title: String { self == .list ? L10n.tr("List") : "JSON" }
     }
 
     @Published var draft = ConfigDraft()
@@ -82,7 +83,7 @@ final class SettingsModel: ObservableObject {
     }
 
     func addFolders() {
-        let panel = folderPanel(message: "Choisis un ou plusieurs dossiers à synchroniser.", prompt: "Ajouter")
+        let panel = folderPanel(message: L10n.tr("Choose one or more folders to sync."), prompt: L10n.tr("Add"))
         panel.allowsMultipleSelection = true
         guard panel.runModal() == .OK else { return }
         var added: FolderDraft.ID?
@@ -99,7 +100,7 @@ final class SettingsModel: ObservableObject {
 
     func chooseFolder(for id: FolderDraft.ID) {
         guard let index = draft.folders.firstIndex(where: { $0.id == id }) else { return }
-        let panel = folderPanel(message: "Choisis le dossier à synchroniser.", prompt: "Choisir")
+        let panel = folderPanel(message: L10n.tr("Choose the folder to sync."), prompt: L10n.tr("Choose"))
         let current = RealHome.expand(draft.folders[index].localPath)
         if !current.isEmpty { panel.directoryURL = URL(fileURLWithPath: current, isDirectory: true) }
         guard panel.runModal() == .OK, let url = panel.url else { return }
@@ -129,9 +130,9 @@ final class SettingsModel: ObservableObject {
         guard Sandbox.isActive else { return }
         do {
             try AccessGrants.shared.grant(url)
-            Log.info("Accès autorisé : \(url.path)")
+            Log.info("Access granted: \(url.path)")
         } catch {
-            Log.info("Autorisation impossible pour \(url.path) : \(error.localizedDescription)")
+            Log.info("Could not grant access to \(url.path): \(error.localizedDescription)")
         }
     }
 
@@ -158,15 +159,15 @@ final class SettingsModel: ObservableObject {
             show(error.localizedDescription, isError: true)
             return false
         }
-        Log.info("Configuration enregistrée depuis les réglages")
+        Log.info("Configuration saved from the settings window")
         state.reloadConfig()
         let selected = draft.folders.firstIndex { $0.id == selection }
         load()
         if let selected, selected < draft.folders.count { selection = draft.folders[selected].id }
         if Sandbox.isActive && !state.missingAccess.isEmpty {
-            show("Enregistré. Des dossiers restent à autoriser : bouton « Autoriser l'accès… ».", isError: false)
+            show(L10n.tr("Saved. Some folders still need access: click “Grant Access…”."), isError: false)
         } else {
-            show("Configuration enregistrée.", isError: false)
+            show(L10n.tr("Configuration saved."), isError: false)
         }
         return true
     }

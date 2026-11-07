@@ -14,7 +14,7 @@ final class SchedulerTests: XCTestCase {
         var scheduler = Scheduler(now: date(10, 0))
         let schedule = ScheduleConfig(intervalMinutes: 60)
         XCTAssertNil(scheduler.shouldSync(schedule: schedule, now: date(10, 59, 59)))
-        XCTAssertEqual(scheduler.shouldSync(schedule: schedule, now: date(11, 0)), "intervalle de 60 min")
+        XCTAssertEqual(scheduler.shouldSync(schedule: schedule, now: date(11, 0)), "every 60 min")
     }
 
     func testIntervalRestartsFromLastSync() {
@@ -33,7 +33,7 @@ final class SchedulerTests: XCTestCase {
         scheduler.didFinishSync(at: date(22, 20, 40))
         XCTAssertNil(scheduler.shouldSync(schedule: schedule, now: date(22, 21, 8)))
         XCTAssertNil(scheduler.shouldSync(schedule: schedule, now: date(23, 20)))
-        XCTAssertEqual(scheduler.shouldSync(schedule: schedule, now: date(23, 20, 40)), "intervalle de 60 min")
+        XCTAssertEqual(scheduler.shouldSync(schedule: schedule, now: date(23, 20, 40)), "every 60 min")
     }
 
     func testIntervalDisabledWhenZeroOrAbsent() {
@@ -49,7 +49,7 @@ final class SchedulerTests: XCTestCase {
         var scheduler = Scheduler(now: date(1, 50))
         let schedule = ScheduleConfig(dailyTimes: ["02:00"])
         XCTAssertNil(scheduler.shouldSync(schedule: schedule, now: date(1, 59, 30)))
-        XCTAssertEqual(scheduler.shouldSync(schedule: schedule, now: date(2, 0, 10)), "heure planifiée 02:00")
+        XCTAssertEqual(scheduler.shouldSync(schedule: schedule, now: date(2, 0, 10)), "scheduled time 02:00")
         XCTAssertNil(scheduler.shouldSync(schedule: schedule, now: date(2, 0, 40)))
         XCTAssertNil(scheduler.shouldSync(schedule: schedule, now: date(15, 0)))
     }
@@ -68,14 +68,14 @@ final class SchedulerTests: XCTestCase {
         // Dernière vérification à 01:00, Mac en veille, réveil à 08:00.
         var scheduler = Scheduler(now: date(1, 0))
         let schedule = ScheduleConfig(dailyTimes: ["02:00"])
-        XCTAssertEqual(scheduler.shouldSync(schedule: schedule, now: date(8, 0)), "heure planifiée 02:00")
+        XCTAssertEqual(scheduler.shouldSync(schedule: schedule, now: date(8, 0)), "scheduled time 02:00")
         XCTAssertNil(scheduler.shouldSync(schedule: schedule, now: date(8, 0, 30)))
     }
 
     func testMissedDailyTimeCaughtUpAfterMidnight() {
         var scheduler = Scheduler(now: date(day: 10, 23, 20))
         let schedule = ScheduleConfig(dailyTimes: ["23:30"])
-        XCTAssertEqual(scheduler.shouldSync(schedule: schedule, now: date(day: 11, 0, 10)), "heure planifiée 23:30")
+        XCTAssertEqual(scheduler.shouldSync(schedule: schedule, now: date(day: 11, 0, 10)), "scheduled time 23:30")
     }
 
     func testSleepAcrossSeveralDaysFiresOnce() {

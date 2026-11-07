@@ -39,42 +39,43 @@ struct MenuContent: View {
             Text(error)
         }
         if let date = state.lastSync {
-            Text("Dernière synchro : \(date.formatted(date: .abbreviated, time: .shortened))")
+            Text("Last sync: \(date.formatted(date: .abbreviated, time: .shortened))")
         }
         if let report = state.lastReport {
             Text(report.summary)
         }
         if !state.missingAccess.isEmpty {
-            Text("Accès à autoriser : \(state.missingAccess.count) dossier(s)")
+            Text("Folders needing access: \(state.missingAccess.count)")
         }
 
         Divider()
 
-        Button(state.isSyncing ? "Arrêter la synchro" : "Synchroniser maintenant") {
+        Button(state.isSyncing ? "Stop Sync" : "Sync Now") {
             state.syncNowOrCancel()
         }
         .keyboardShortcut("s")
 
-        Button("Réglages…") { state.openSettings() }
+        Button("Settings…") { state.openSettings() }
             .keyboardShortcut(",")
-        Button("Ouvrir config.json") { state.openConfig() }
-        Button("Recharger la configuration") { state.reloadConfig() }
+        Button("Open config.json") { state.openConfig() }
+        Button("Reload Configuration") { state.reloadConfig() }
             .keyboardShortcut("r")
-        Button("Ouvrir le journal") { state.openLog() }
-        Button("Enregistrer la clé secrète AWS…") { state.editSecretKey() }
+        Button("Open Log") { state.openLog() }
+        Button("Save AWS Secret Key…") { state.editSecretKey() }
         if state.ssoProfile != nil {
-            Button(state.isLoggingIn ? "Annuler la connexion à AWS" : "Se connecter à AWS…") { state.loginOrCancel() }
+            Button(state.isLoggingIn ? "Cancel AWS Sign-In" : "Sign In to AWS…") { state.loginOrCancel() }
         }
         if !state.missingAccess.isEmpty {
-            Button("Autoriser l'accès…") { state.grantAccess() }
+            Button("Grant Access…") { state.grantAccess() }
         }
 
         Divider()
 
-        if let help = Bundle.main.url(forResource: "Aide", withExtension: "html") {
-            Button("Aide") { NSWorkspace.shared.open(help) }
+        // Page d'aide dans la langue de l'interface (Resources/<langue>.lproj/Help.html).
+        if let help = Bundle.main.url(forResource: "Help", withExtension: "html") {
+            Button("Help") { NSWorkspace.shared.open(help) }
         }
-        Button("Quitter Simple Sync S3") { NSApp.terminate(nil) }
+        Button("Quit Simple Sync S3") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }
 }

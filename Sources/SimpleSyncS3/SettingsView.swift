@@ -3,7 +3,7 @@ import S5Core
 
 struct SettingsView: View {
     @ObservedObject var model: SettingsModel
-    /// Observé pour rafraîchir les boutons « Se connecter à AWS… » et « Autoriser l'accès… ».
+    /// Observé pour rafraîchir les boutons « Sign In to AWS… » et « Grant Access… ».
     @ObservedObject var state: AppState
 
     var body: some View {
@@ -13,11 +13,11 @@ struct SettingsView: View {
             } else {
                 TabView {
                     AccountTab(model: model)
-                        .tabItem { Text("Compte AWS") }
+                        .tabItem { Text("AWS Account") }
                     SyncTab(model: model)
-                        .tabItem { Text("Synchro") }
+                        .tabItem { Text("Sync") }
                     FoldersTab(model: model)
-                        .tabItem { Text("Dossiers") }
+                        .tabItem { Text("Folders") }
                 }
                 .padding([.horizontal, .top])
             }
@@ -29,14 +29,14 @@ struct SettingsView: View {
 
     private func loadErrorView(_ error: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("config.json ne peut pas être lu", systemImage: "exclamationmark.triangle")
+            Label("config.json can’t be read", systemImage: "exclamationmark.triangle")
                 .font(.headline)
             Text(error).textSelection(.enabled)
-            Text("Corrige le fichier dans un éditeur de texte, puis clique « Relire ».")
+            Text("Fix the file in a text editor, then click “Reload”.")
                 .foregroundStyle(.secondary)
             HStack {
-                Button("Ouvrir config.json") { model.openConfigFile() }
-                Button("Relire") { model.load() }
+                Button("Open config.json") { model.openConfigFile() }
+                Button("Reload") { model.load() }
             }
             Spacer()
         }
@@ -54,12 +54,12 @@ struct SettingsView: View {
             }
             Spacer()
             if model.needsAccess {
-                Button("Autoriser l'accès…") { model.grantAccess() }
+                Button("Grant Access…") { model.grantAccess() }
             }
-            Button("Ouvrir config.json") { model.openConfigFile() }
-            Button("Annuler les modifications") { model.revert() }
+            Button("Open config.json") { model.openConfigFile() }
+            Button("Revert Changes") { model.revert() }
                 .disabled(!model.isDirty)
-            Button("Enregistrer") { model.save() }
+            Button("Save") { model.save() }
                 .keyboardShortcut("s", modifiers: .command)
                 .disabled(model.loadError != nil)
         }
@@ -76,63 +76,62 @@ private struct AccountTab: View {
         Form {
             Section {
                 HStack {
-                    TextField("Profil AWS", text: $model.draft.awsProfile, prompt: Text(profilePlaceholder))
+                    TextField("AWS profile", text: $model.draft.awsProfile, prompt: profilePlaceholder)
                     if !model.profiles.isEmpty {
                         Menu {
                             ForEach(model.profiles, id: \.self) { name in
                                 Button(name) { model.draft.awsProfile = name }
                             }
                         } label: {
-                            Text("Profils")
+                            Text("Profiles")
                         }
                         .fixedSize()
                     }
                 }
                 if model.isSSOProfile {
                     HStack {
-                        Text("Profil IAM Identity Center (SSO).").foregroundStyle(.secondary)
+                        Text("IAM Identity Center (SSO) profile.").foregroundStyle(.secondary)
                         Spacer()
-                        Button(model.isLoggingIn ? "Annuler la connexion" : "Se connecter à AWS…") { model.login() }
+                        Button(model.isLoggingIn ? "Cancel Sign-In" : "Sign In to AWS…") { model.login() }
                     }
                 }
             } header: {
-                Text("Profil (~/.aws)")
+                Text("Profile (~/.aws)")
             } footer: {
-                Text("Clés, IAM Identity Center (SSO) ou credential_process. Vide : profil « default », "
-                     + "sauf si une clé d'accès est renseignée ci-dessous.")
+                Text("Keys, IAM Identity Center (SSO) or credential_process. Empty: the “default” profile, unless an access key is entered below.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
-                TextField("Clé d'accès (Access Key ID)", text: $model.draft.accessKeyId, prompt: Text("AKIA…"))
+                TextField("Access key ID", text: $model.draft.accessKeyId, prompt: Text(verbatim: "AKIA…"))
                     .font(.body.monospaced())
                 HStack {
                     Text(model.draft.hasPlaintextSecret
-                         ? "Une clé secrète est écrite en clair dans config.json (déconseillé)."
-                         : "La clé secrète est gardée dans le trousseau macOS.")
+                         ? "A secret key is stored in plain text in config.json (not recommended)."
+                         : "The secret key is kept in the macOS Keychain.")
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Button("Clé secrète…") { model.editSecretKey() }
+                    Button("Secret Key…") { model.editSecretKey() }
                         .disabled(model.draft.accessKeyId.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             } header: {
-                Text("Clé d'accès (facultatif)")
+                Text("Access key (optional)")
             } footer: {
-                Text("Utilisée seule si le profil est vide, sinon en secours si le profil ne fonctionne pas. "
-                     + "Enregistre d'abord pour que la clé d'accès soit prise en compte.")
+                Text("Used on its own if the profile is empty, otherwise as a fallback when the profile doesn’t work. Save first so the access key is taken into account.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
-            Section("Bucket S3") {
-                TextField("Bucket", text: $model.draft.bucket, prompt: Text("mon-bucket"))
-                TextField("Région", text: $model.draft.region, prompt: Text("celle du profil (ex. eu-west-3)"))
+            Section("S3 Bucket") {
+                TextField("Bucket", text: $model.draft.bucket, prompt: Text("my-bucket"))
+                TextField("Region", text: $model.draft.region, prompt: Text("from the profile (e.g. eu-west-3)"))
             }
         }
         .formStyle(.grouped)
     }
 
-    private var profilePlaceholder: String {
-        model.draft.accessKeyId.trimmingCharacters(in: .whitespaces).isEmpty ? "default" : "aucun (clé d'accès seule)"
+    private var profilePlaceholder: Text {
+        model.draft.accessKeyId.trimmingCharacters(in: .whitespaces).isEmpty
+            ? Text(verbatim: "default") : Text("none (access key only)")
     }
 }
 
@@ -143,11 +142,11 @@ private struct SyncTab: View {
 
     var body: some View {
         Form {
-            Section("Planification") {
-                Toggle("Synchroniser à intervalle régulier", isOn: intervalEnabled)
+            Section("Schedule") {
+                Toggle("Sync at regular intervals", isOn: intervalEnabled)
                 if model.draft.intervalMinutes > 0 {
                     HStack {
-                        Text("Toutes les")
+                        Text("Every")
                         TextField("", value: $model.draft.intervalMinutes, format: .number)
                             .labelsHidden()
                             .frame(width: 70)
@@ -158,21 +157,21 @@ private struct SyncTab: View {
                         Spacer()
                     }
                 }
-                TextField("Heures fixes", text: $model.draft.dailyTimes, prompt: Text("ex. 02:00, 13:30"))
-                Toggle("Synchroniser au lancement de l'app", isOn: $model.draft.syncOnLaunch)
+                TextField("Fixed times", text: $model.draft.dailyTimes, prompt: Text("e.g. 02:00, 13:30"))
+                Toggle("Sync when the app launches", isOn: $model.draft.syncOnLaunch)
             }
 
             Section {
-                Toggle("Supprimer sur S3 les fichiers supprimés en local", isOn: $model.draft.deleteRemote)
+                Toggle("Delete from S3 the files deleted locally", isOn: $model.draft.deleteRemote)
             } header: {
-                Text("Suppressions")
+                Text("Deletions")
             } footer: {
-                Text("Jamais pour un dossier envoyé à la racine du bucket, ni pour un dossier local vide.")
+                Text("Never for a folder synced to the bucket root, nor for an empty local folder.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
-            Section("Démarrage") {
-                Toggle("Lancer Simple Sync S3 à l'ouverture de session", isOn: $model.draft.launchAtLogin)
+            Section("Startup") {
+                Toggle("Launch Simple Sync S3 at login", isOn: $model.draft.launchAtLogin)
             }
         }
         .formStyle(.grouped)
@@ -191,8 +190,8 @@ private struct FoldersTab: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Picker("Affichage", selection: Binding(get: { model.folderMode }, set: { model.setFolderMode($0) })) {
-                ForEach(SettingsModel.FolderMode.allCases) { Text($0.rawValue).tag($0) }
+            Picker("View", selection: Binding(get: { model.folderMode }, set: { model.setFolderMode($0) })) {
+                ForEach(SettingsModel.FolderMode.allCases) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -223,9 +222,9 @@ private struct FoldersTab: View {
                 .listStyle(.bordered(alternatesRowBackgrounds: false))
                 HStack(spacing: 0) {
                     Button { model.addFolders() } label: { Image(systemName: "plus").frame(width: 22, height: 18) }
-                        .help("Ajouter des dossiers")
+                        .help("Add folders")
                     Button { model.removeSelectedFolder() } label: { Image(systemName: "minus").frame(width: 22, height: 18) }
-                        .help("Retirer le dossier de la liste (rien n'est supprimé)")
+                        .help("Remove the folder from the list (nothing is deleted)")
                         .disabled(model.selection == nil)
                     Spacer()
                 }
@@ -239,8 +238,8 @@ private struct FoldersTab: View {
             } else {
                 VStack {
                     Spacer()
-                    Text(model.draft.folders.isEmpty ? "Aucun dossier : clique « + » pour en ajouter."
-                                                     : "Sélectionne un dossier.")
+                    Text(model.draft.folders.isEmpty ? "No folders: click “+” to add one."
+                                                     : "Select a folder.")
                         .foregroundStyle(.secondary)
                     Spacer()
                 }
@@ -265,8 +264,7 @@ private struct FoldersTab: View {
             TextEditor(text: $model.foldersJSON)
                 .font(.body.monospaced())
                 .border(Color.secondary.opacity(0.3))
-            Text("Tableau d'objets : localPath (obligatoire), s3Prefix, exclude. "
-                 + "Vérifié au retour en mode Liste et à l'enregistrement.")
+            Text("Array of objects: localPath (required), s3Prefix, exclude. Checked when switching back to List and when saving.")
                 .font(.caption).foregroundStyle(.secondary)
         }
     }
@@ -279,19 +277,19 @@ private struct FolderDetail: View {
     var body: some View {
         Form {
             HStack {
-                TextField("Dossier local", text: $folder.localPath, prompt: Text("~/Documents/…"))
-                Button("Choisir…", action: choose)
+                TextField("Local folder", text: $folder.localPath, prompt: Text(verbatim: "~/Documents/…"))
+                Button("Choose…", action: choose)
             }
-            Toggle("Envoyer à la racine du bucket", isOn: atRoot)
-            TextField("Préfixe S3", text: prefix, prompt: Text(folder.defaultPrefix.isEmpty ? "racine" : folder.defaultPrefix))
+            Toggle("Upload to the bucket root", isOn: atRoot)
+            TextField("S3 prefix", text: prefix, prompt: folder.defaultPrefix.isEmpty ? Text("root") : Text(verbatim: folder.defaultPrefix))
                 .disabled(folder.s3Prefix == "")
             VStack(alignment: .leading, spacing: 4) {
-                Text("Exclusions (une par ligne, syntaxe .gitignore)")
+                Text("Exclusions (one per line, .gitignore syntax)")
                 TextEditor(text: $folder.excludeText)
                     .font(.body.monospaced())
                     .frame(minHeight: 120)
                     .border(Color.secondary.opacity(0.3))
-                Text("Ex. *.tmp, node_modules/, /build, !garder.log")
+                Text("E.g. *.tmp, node_modules/, /build, !keep.log")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }

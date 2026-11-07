@@ -9,7 +9,7 @@ SANDBOX=0
 case "${1:-}" in
     "") ;;
     --sandbox) SANDBOX=1 ;;
-    *) echo "Usage : $0 [--sandbox]" >&2; exit 2 ;;
+    *) echo "Usage: $0 [--sandbox]" >&2; exit 2 ;;
 esac
 
 swift build -c release
@@ -20,7 +20,8 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_DIR/SimpleSyncS3" "$APP/Contents/MacOS/SimpleSyncS3"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
-cp Resources/Aide.html "$APP/Contents/Resources/Aide.html"
+# Traductions (Localizable.strings, InfoPlist.strings) et page d'aide, une copie par langue.
+cp -R Resources/*.lproj "$APP/Contents/Resources/"
 # Signature : identité de S5_SIGN_IDENTITY, sinon le certificat local créé par create-signing-cert.sh
 # (ou celui de l'ancien nom de l'app), sinon « ad hoc » (macOS redemande alors les autorisations
 # après chaque compilation).
@@ -32,14 +33,14 @@ if [ -z "$IDENTITY" ]; then
 fi
 if [ -z "$IDENTITY" ]; then
     IDENTITY=-
-    echo "Signature ad hoc : l'accès à Documents sera redemandé après chaque mise à jour." >&2
-    echo "Pour l'éviter, une seule fois : ./scripts/create-signing-cert.sh" >&2
+    echo "Ad hoc signature: macOS will ask again for access to Documents after each update." >&2
+    echo "To avoid it, once: ./scripts/create-signing-cert.sh" >&2
 fi
 if [ "$SANDBOX" = 1 ]; then
     codesign --force --sign "$IDENTITY" --entitlements Resources/SimpleSyncS3.entitlements "$APP"
-    echo "App prête (sandbox, signée « $IDENTITY ») : $(pwd)/$APP"
+    echo "App ready (sandbox, signed with \"$IDENTITY\"): $(pwd)/$APP"
 else
     codesign --force --sign "$IDENTITY" "$APP"
-    echo "App prête (signée « $IDENTITY ») : $(pwd)/$APP"
+    echo "App ready (signed with \"$IDENTITY\"): $(pwd)/$APP"
 fi
-echo "Pour l'installer : ./scripts/install.sh"
+echo "To install it: ./scripts/install.sh"

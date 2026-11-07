@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import S5Core
 
 /// Fenêtre de réglages, gérée à la main : la scène `Settings` de SwiftUI s'ouvre mal depuis une app
 /// de barre de menus (pas de Dock, pas de menu principal visible) selon la version de macOS.
@@ -16,7 +17,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             let window = EditingWindow(contentRect: NSRect(x: 0, y: 0, width: 680, height: 560),
                                        styleMask: [.titled, .closable, .miniaturizable, .resizable],
                                        backing: .buffered, defer: false)
-            window.title = "Réglages de Simple Sync S3"
+            window.title = L10n.tr("Simple Sync S3 Settings")
             window.contentViewController = NSHostingController(rootView: SettingsView(model: model, state: state))
             window.setContentSize(NSSize(width: 680, height: 560))
             window.isReleasedWhenClosed = false
@@ -34,11 +35,11 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         sender.makeFirstResponder(nil)
         guard model.isDirty else { return true }
         let alert = NSAlert()
-        alert.messageText = "Enregistrer les modifications ?"
-        alert.informativeText = "Les réglages modifiés ne sont pas encore écrits dans config.json."
-        alert.addButton(withTitle: "Enregistrer")
-        alert.addButton(withTitle: "Annuler")
-        alert.addButton(withTitle: "Ne pas enregistrer")
+        alert.messageText = L10n.tr("Save your changes?")
+        alert.informativeText = L10n.tr("The changed settings have not been written to config.json yet.")
+        alert.addButton(withTitle: L10n.tr("Save"))
+        alert.addButton(withTitle: L10n.tr("Cancel"))
+        alert.addButton(withTitle: L10n.tr("Don’t Save"))
         switch alert.runModal() {
         case .alertFirstButtonReturn: return model.save()
         case .alertThirdButtonReturn: return true

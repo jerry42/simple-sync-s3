@@ -11,16 +11,16 @@ enum SSOError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .incompleteProfile(let profile, let missing):
-            return "Profil SSO « \(profile) » incomplet dans ~/.aws/config : \(missing) manquant."
+            return L10n.tr("SSO profile “%@” is incomplete in ~/.aws/config: %@ missing.", profile, missing)
         case .loginRequired(let profile):
-            return "Connexion IAM Identity Center requise pour le profil « \(profile) » "
-                + "(menu « Se connecter à AWS… », ou s5-sync --login)."
+            return L10n.tr("IAM Identity Center sign-in required for profile “%@” "
+                          + "(“Sign In to AWS…” menu, or s5-sync --login).", profile)
         case .loginFailed(let message):
-            return "Connexion IAM Identity Center impossible : \(message)"
+            return L10n.tr("IAM Identity Center sign-in failed: %@", message)
         case .http(let code, let message):
             return "IAM Identity Center HTTP \(code) – \(message.prefix(300))"
         case .cancelled:
-            return "Connexion IAM Identity Center annulée."
+            return L10n.tr("IAM Identity Center sign-in cancelled.")
         }
     }
 }
@@ -152,7 +152,7 @@ struct SSOClient {
         let token = try validToken()
         let query = "account_id=\(SigV4.uriEncode(profile.accountId))&role_name=\(SigV4.uriEncode(profile.roleName))"
         guard let url = URL(string: "https://portal.sso.\(profile.ssoRegion).amazonaws.com/federation/credentials?\(query)")
-        else { throw SSOError.loginFailed("URL du portail invalide") }
+        else { throw SSOError.loginFailed(L10n.tr("invalid portal URL")) }
         var request = URLRequest(url: url, timeoutInterval: 30)
         request.setValue(token.accessToken, forHTTPHeaderField: "x-amz-sso_bearer_token")
         request.setValue("application/json", forHTTPHeaderField: "accept")
@@ -172,7 +172,7 @@ struct SSOClient {
             let roleCredentials: Role
         }
         guard let role = try? JSONDecoder().decode(Output.self, from: data).roleCredentials else {
-            throw SSOError.loginFailed("réponse GetRoleCredentials illisible")
+            throw SSOError.loginFailed(L10n.tr("unreadable GetRoleCredentials response"))
         }
         return AWSCredentials(accessKeyId: role.accessKeyId, secretAccessKey: role.secretAccessKey,
                               sessionToken: role.sessionToken,
@@ -207,7 +207,7 @@ struct SSOClient {
         fresh.expiresAt = now().addingTimeInterval(TimeInterval(created.expiresIn))
         fresh.refreshToken = created.refreshToken ?? refreshToken
         try save(fresh)
-        Log.info("Jeton IAM Identity Center rafraîchi (profil « \(profile.name) »)")
+        Log.info("IAM Identity Center token refreshed (profile “\(profile.name)”)")
         return fresh
     }
 
@@ -244,7 +244,7 @@ struct SSOClient {
         }
         let auth = try decode(AuthorizationOutput.self, authData, "StartDeviceAuthorization")
         guard let url = URL(string: auth.verificationUriComplete ?? auth.verificationUri) else {
-            throw SSOError.loginFailed("URL de validation invalide")
+            throw SSOError.loginFailed(L10n.tr("invalid verification URL"))
         }
         open(SSODeviceAuthorization(userCode: auth.userCode, verificationURL: url))
 
@@ -256,7 +256,7 @@ struct SSOClient {
                 sleep(1)
             }
             if isCancelled() { throw SSOError.cancelled }
-            if now() > deadline { throw SSOError.loginFailed("code expiré avant validation") }
+            if now() > deadline { throw SSOError.loginFailed(L10n.tr("code expired before it was approved")) }
 
             let (data, response) = try postJSON("/token", [
                 "clientId": client.clientId, "clientSecret": client.clientSecret,
@@ -270,14 +270,14 @@ struct SSOClient {
                     clientId: client.clientId, clientSecret: client.clientSecret,
                     registrationExpiresAt: client.clientSecretExpiresAt.map { Date(timeIntervalSince1970: TimeInterval($0)) },
                     refreshToken: created.refreshToken))
-                Log.info("Connecté à IAM Identity Center (profil « \(profile.name) »)")
+                Log.info("Signed in to IAM Identity Center (profile “\(profile.name)”)")
                 return
             }
             switch Self.errorCode(data, response) {
             case "authorizationpending": continue
             case "slowdown": interval += 5
-            case "expiredtoken": throw SSOError.loginFailed("code expiré avant validation")
-            case "accessdenied": throw SSOError.loginFailed("autorisation refusée dans le navigateur")
+            case "expiredtoken": throw SSOError.loginFailed(L10n.tr("code expired before it was approved"))
+            case "accessdenied": throw SSOError.loginFailed(L10n.tr("authorization denied in the browser"))
             default: throw SSOError.http(response.statusCode, Self.message(data))
             }
         }
@@ -292,7 +292,7 @@ struct SSOClient {
     }
 
     private func postJSON(_ path: String, _ body: [String: Any]) throws -> (Data, HTTPURLResponse) {
-        guard let url = URL(string: oidcBase + path) else { throw SSOError.loginFailed("URL OIDC invalide") }
+        guard let url = URL(string: oidcBase + path) else { throw SSOError.loginFailed(L10n.tr("invalid OIDC URL")) }
         var request = URLRequest(url: url, timeoutInterval: 30)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "content-type")
@@ -310,7 +310,7 @@ struct SSOClient {
         do {
             return try JSONDecoder().decode(type, from: data)
         } catch {
-            throw SSOError.loginFailed("réponse \(operation) illisible")
+            throw SSOError.loginFailed(L10n.tr("unreadable %@ response", operation))
         }
     }
 
@@ -362,7 +362,7 @@ public enum SSOLogin {
         let credentials = ProfileCredentials()
         try credentials.checkAccess()
         guard let sso = try credentials.ssoProfile(profile) else {
-            throw SSOError.loginFailed("le profil « \(profile) » n'est pas un profil IAM Identity Center")
+            throw SSOError.loginFailed(L10n.tr("profile “%@” is not an IAM Identity Center profile", profile))
         }
         try credentials.ssoClient(sso).login(open: open, isCancelled: isCancelled)
     }

@@ -225,7 +225,7 @@ final class SSOTests: XCTestCase {
     func testMissingCacheRequiresLogin() throws {
         let transport = FakeTransport([])
         XCTAssertThrowsError(try client(transport).roleCredentials()) { error in
-            XCTAssertTrue(error.localizedDescription.contains("Se connecter à AWS"), error.localizedDescription)
+            XCTAssertTrue(error.localizedDescription.contains("Sign In to AWS"), error.localizedDescription)
         }
         XCTAssertTrue(transport.requests.isEmpty)
     }
@@ -306,7 +306,7 @@ final class SSOTests: XCTestCase {
             .init(status: 400, body: #"{"error":"access_denied"}"#),
         ])
         XCTAssertThrowsError(try client(transport).login(open: { _ in }, isCancelled: { false })) { error in
-            XCTAssertTrue(error.localizedDescription.contains("refusée"), error.localizedDescription)
+            XCTAssertTrue(error.localizedDescription.contains("denied"), error.localizedDescription)
         }
     }
 
@@ -350,13 +350,13 @@ final class SSOTests: XCTestCase {
 
     func testSandboxWithoutAWSDirAccess() {
         XCTAssertThrowsError(try profileCredentials(sandboxed: true, authorized: false).load(profile: "cles")) { error in
-            XCTAssertTrue(error.localizedDescription.contains("Autoriser l'accès"), error.localizedDescription)
+            XCTAssertTrue(error.localizedDescription.contains("Grant Access"), error.localizedDescription)
         }
     }
 
     func testSandboxRefusesCredentialProcess() {
         XCTAssertThrowsError(try profileCredentials(sandboxed: true).load(profile: "processus")) { error in
-            XCTAssertTrue(error.localizedDescription.contains("credential_process indisponible"), error.localizedDescription)
+            XCTAssertTrue(error.localizedDescription.contains("credential_process is not available"), error.localizedDescription)
         }
     }
 

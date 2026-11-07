@@ -1,15 +1,15 @@
 import Foundation
 import S5Core
 
-// Synchro unique sans interface, pour tester une configuration :
+// Synchro unique sans interface, pour tester une configuration (messages en anglais) :
 //   s5-sync --config <chemin> [--state <chemin>]
 // Code de sortie : 0 si tout va bien, 1 si la synchro a des erreurs, 2 si la configuration est invalide.
 
 let usage = """
-Usage : s5-sync --config <config.json> [--state <state.json>] [--login]
-  --config  configuration à utiliser (même format que l'app)
-  --state   cache de synchro (par défaut : state.json à côté de la configuration)
-  --login   se connecter d'abord à IAM Identity Center (profil SSO), via le navigateur
+Usage: s5-sync --config <config.json> [--state <state.json>] [--login]
+  --config  configuration to use (same format as the app)
+  --state   sync cache (default: state.json next to the configuration)
+  --login   sign in to IAM Identity Center first (SSO profile), in the browser
 """
 
 func fail(_ message: String, code: Int32) -> Never {
@@ -28,7 +28,7 @@ while let arg = args.popFirst() {
     case "--login": login = true
     case "--once": break // seul mode disponible, accepté pour la lisibilité
     case "-h", "--help": print(usage); exit(0)
-    default: fail("Option inconnue : \(arg)\n\(usage)", code: 2)
+    default: fail("Unknown option: \(arg)\n\(usage)", code: 2)
     }
 }
 
@@ -41,14 +41,14 @@ let config: AppConfig
 do {
     config = try ConfigStore.load(from: configURL)
 } catch {
-    fail("Configuration \(configURL.path) : \(error.localizedDescription)", code: 2)
+    fail("Configuration \(configURL.path): \(error.localizedDescription)", code: 2)
 }
 
 if login {
-    guard let profile = config.awsProfile else { fail("--login demande \"awsProfile\" dans la configuration", code: 2) }
+    guard let profile = config.awsProfile else { fail("--login requires \"awsProfile\" in the configuration", code: 2) }
     do {
         try SSOLogin.login(profile: profile) { authorization in
-            print("Valide le code \(authorization.userCode) sur \(authorization.verificationURL.absoluteString)")
+            print("Approve code \(authorization.userCode) at \(authorization.verificationURL.absoluteString)")
             let open = Process()
             open.executableURL = URL(fileURLWithPath: "/usr/bin/open")
             open.arguments = [authorization.verificationURL.absoluteString]
@@ -62,16 +62,16 @@ if login {
 }
 
 let start = Date()
-Log.info("Synchro lancée (ligne de commande, config \(configURL.path), état \(stateURL.path))")
+Log.info("Sync started (command line, config \(configURL.path), state \(stateURL.path))")
 let report: SyncReport
 do {
     report = try await SyncEngine(config: config, stateURL: stateURL, progress: { _ in }).run()
 } catch {
-    Log.info("Synchro impossible : \(error.localizedDescription)")
+    Log.info("Sync failed: \(error.localizedDescription)")
     Log.flush()
     exit(1)
 }
-Log.info("Synchro terminée en \(String(format: "%.1f", Date().timeIntervalSince(start))) s : \(report.summary)")
+Log.info("Sync finished in \(String(format: "%.1f", Date().timeIntervalSince(start))) s: \(report.summary)")
 for error in report.errors { Log.info("  • \(error)") }
 Log.flush()
 exit(report.errors.isEmpty && !report.cancelled ? 0 : 1)

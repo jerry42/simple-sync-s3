@@ -86,9 +86,9 @@ enum ConfigError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .createdTemplate(let path):
-            return "Fichier de configuration créé, à compléter : \(path)"
+            return L10n.tr("Configuration file created, fill it in: %@", path)
         case .invalid(let message):
-            return "Configuration invalide : \(message)"
+            return L10n.tr("Invalid configuration: %@", message)
         }
     }
 }
@@ -122,10 +122,10 @@ public enum ConfigStore {
             for name in items {
                 try fm.copyItem(at: legacy.appendingPathComponent(name), to: current.appendingPathComponent(name))
             }
-            Log.info("Configuration reprise de \(legacy.path) vers \(current.path)")
+            Log.info("Configuration copied from \(legacy.path) to \(current.path)")
             return true
         } catch {
-            Log.info("Reprise de \(legacy.path) impossible : \(error.localizedDescription)")
+            Log.info("Could not copy \(legacy.path): \(error.localizedDescription)")
             return false
         }
     }
@@ -137,7 +137,7 @@ public enum ConfigStore {
     {
       "awsProfile": "default",
       "region": "eu-west-3",
-      "bucket": "mon-bucket",
+      "bucket": "my-bucket",
       "deleteRemote": false,
       "launchAtLogin": false,
       "schedule": {
@@ -147,14 +147,17 @@ public enum ConfigStore {
       },
       "folders": [
         {
-          "localPath": "~/Documents/Exemple",
-          "s3Prefix": "exemple",
+          "localPath": "~/Documents/Example",
+          "s3Prefix": "example",
           "exclude": ["*.tmp"]
         }
       ]
     }
 
     """
+
+    /// Bucket names of the template (current and older French one): the file still has to be filled in.
+    static let placeholderBuckets: Set<String> = ["my-bucket", "mon-bucket"]
 
     public static func load() throws -> AppConfig {
         let fm = FileManager.default
@@ -179,23 +182,23 @@ public enum ConfigStore {
         do {
             config = try JSONDecoder().decode(AppConfig.self, from: data)
         } catch let DecodingError.keyNotFound(key, _) {
-            throw ConfigError.invalid("clé manquante « \(key.stringValue) »")
+            throw ConfigError.invalid(L10n.tr("missing key “%@”", key.stringValue))
         } catch let DecodingError.typeMismatch(_, ctx) {
-            throw ConfigError.invalid("type incorrect pour « \(ctx.codingPath.map(\.stringValue).joined(separator: ".")) »")
+            throw ConfigError.invalid(L10n.tr("wrong type for “%@”", ctx.codingPath.map(\.stringValue).joined(separator: ".")))
         } catch {
             throw ConfigError.invalid(error.localizedDescription)
         }
-        if config.bucket.isEmpty || config.bucket == "mon-bucket" {
-            throw ConfigError.invalid("renseigne le nom du bucket")
+        if config.bucket.isEmpty || placeholderBuckets.contains(config.bucket) {
+            throw ConfigError.invalid(L10n.tr("enter the bucket name"))
         }
         if config.folders.isEmpty {
-            throw ConfigError.invalid("aucun dossier à synchroniser")
+            throw ConfigError.invalid(L10n.tr("no folder to sync"))
         }
         if config.accessKeyId == nil && (config.secretAccessKey != nil || config.sessionToken != nil) {
-            throw ConfigError.invalid("« secretAccessKey » et « sessionToken » demandent « accessKeyId »")
+            throw ConfigError.invalid(L10n.tr("“secretAccessKey” and “sessionToken” require “accessKeyId”"))
         }
         for time in config.schedule.dailyTimes ?? [] where Scheduler.parseTime(time) == nil {
-            throw ConfigError.invalid("heure « \(time) » invalide (format HH:mm)")
+            throw ConfigError.invalid(L10n.tr("invalid time “%@” (format HH:mm)", time))
         }
         return config
     }

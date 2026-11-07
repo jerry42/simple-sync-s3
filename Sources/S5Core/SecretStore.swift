@@ -10,8 +10,8 @@ public struct KeychainError: LocalizedError {
     public let status: OSStatus
 
     public var errorDescription: String? {
-        let message = SecCopyErrorMessageString(status, nil) as String? ?? "erreur inconnue"
-        return "Trousseau : \(message) (\(status))"
+        let message = SecCopyErrorMessageString(status, nil) as String? ?? L10n.tr("unknown error")
+        return L10n.tr("Keychain: %@ (%lld)", message, Int(status))
     }
 }
 
@@ -36,7 +36,7 @@ public struct KeychainSecretStore: SecretStore {
         guard let legacy = try read(accessKeyId, service: Self.legacyService) else { return nil }
         // Recopie sous le nouveau nom ; en cas d'échec, l'ancien élément reste utilisable.
         if (try? save(legacy, for: accessKeyId)) != nil {
-            Log.info("Clé secrète du trousseau reprise de l'ancien nom de l'app (MyDropbox)")
+            Log.info("Keychain secret key taken over from the app's former name (MyDropbox)")
         }
         return legacy
     }
@@ -68,7 +68,7 @@ public struct KeychainSecretStore: SecretStore {
         try? delete(accessKeyId, service: Self.legacyService)
         var q = query(accessKeyId)
         q[kSecValueData as String] = Data(secret.utf8)
-        q[kSecAttrLabel as String] = "Simple Sync S3 – clé secrète AWS"
+        q[kSecAttrLabel as String] = L10n.tr("Simple Sync S3 – AWS secret key")
         let status = SecItemAdd(q as CFDictionary, nil)
         guard status == errSecSuccess else { throw KeychainError(status: status) }
     }

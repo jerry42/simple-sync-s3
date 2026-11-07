@@ -132,9 +132,9 @@ public struct FolderDraft: Identifiable, Equatable, Sendable {
     }
 
     init(json: JSONValue) throws {
-        guard var dict = json.object else { throw ConfigError.invalid("chaque dossier doit être un objet JSON") }
+        guard var dict = json.object else { throw ConfigError.invalid(L10n.tr("each folder must be a JSON object")) }
         guard let path = dict.removeValue(forKey: "localPath")?.string else {
-            throw ConfigError.invalid("chaque dossier doit avoir un « localPath »")
+            throw ConfigError.invalid(L10n.tr("each folder needs a “localPath”"))
         }
         localPath = path
         s3Prefix = dict.removeValue(forKey: "s3Prefix")?.string
@@ -208,9 +208,9 @@ public struct ConfigDraft: Equatable, Sendable {
         do {
             value = try JSONDecoder().decode(JSONValue.self, from: data)
         } catch {
-            throw ConfigError.invalid("JSON illisible (\(error.localizedDescription))")
+            throw ConfigError.invalid(L10n.tr("unreadable JSON (%@)", error.localizedDescription))
         }
-        guard let dict = value.object else { throw ConfigError.invalid("le fichier doit contenir un objet JSON") }
+        guard let dict = value.object else { throw ConfigError.invalid(L10n.tr("the file must contain a JSON object")) }
         raw = dict
         func text(_ key: String, in d: [String: JSONValue] = dict) -> String { d[key]?.string ?? "" }
         func flag(_ key: String, in d: [String: JSONValue] = dict) -> Bool {
@@ -279,10 +279,10 @@ public struct ConfigDraft: Equatable, Sendable {
         do {
             value = try JSONDecoder().decode(JSONValue.self, from: Data(json.utf8))
         } catch {
-            throw ConfigError.invalid("JSON des dossiers illisible (\(error.localizedDescription))")
+            throw ConfigError.invalid(L10n.tr("unreadable folder JSON (%@)", error.localizedDescription))
         }
         guard case .array(let items) = value else {
-            throw ConfigError.invalid("la liste des dossiers doit être un tableau JSON [ … ]")
+            throw ConfigError.invalid(L10n.tr("the folder list must be a JSON array [ … ]"))
         }
         folders = try items.map(FolderDraft.init(json:))
     }

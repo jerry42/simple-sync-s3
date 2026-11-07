@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simple Sync S3 Help</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1d1d1f; --muted: #6e6e73; --accent: #0a64d8;
+    --code-bg: #f2f2f5; --border: #d9d9de; --note-bg: #fff6dc; --note-border: #e8c75a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e; --fg: #f2f2f7; --muted: #a1a1a6; --accent: #5ea8ff;
+      --code-bg: #2c2c2e; --border: #3a3a3c; --note-bg: #3a3220; --note-border: #8a7330;
+    }
+  }
+  body { background: var(--bg); color: var(--fg); margin: 0;
+         font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 20px; margin: 40px 0 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  h3 { font-size: 16px; margin: 24px 0 6px; }
+  .lead { color: var(--muted); margin-top: 0; }
+  a { color: var(--accent); }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px;
+         font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre { background: var(--code-bg); padding: 12px 14px; border-radius: 8px; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+  .note { background: var(--note-bg); border-left: 4px solid var(--note-border);
+          padding: 8px 12px; border-radius: 4px; margin: 12px 0; }
+  nav ol { columns: 2; padding-left: 20px; }
+  @media (max-width: 600px) { nav ol { columns: 1; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Simple Sync S3 <small>(S5)</small></h1>
+<p class="lead">Automatically uploads folders from your Mac to an Amazon S3 bucket. One-way sync
+(Mac → S3), at regular intervals and/or at fixed times, from the menu bar.</p>
+
+<nav>
+<ol>
+  <li><a href="#install">Install</a></li>
+  <li><a href="#configure">Configure</a></li>
+  <li><a href="#credentials">AWS credentials</a></li>
+  <li><a href="#folders">Folders and exclusions</a></li>
+  <li><a href="#schedule">Schedule</a></li>
+  <li><a href="#menu">The menu</a></li>
+  <li><a href="#sandbox">Sandboxed version</a></li>
+  <li><a href="#troubleshooting">Troubleshooting</a></li>
+  <li><a href="#uninstall">Uninstall</a></li>
+</ol>
+</nav>
+
+<h2 id="install">1. Install</h2>
+<p>Requirements: macOS 13 or later, and Apple's developer tools
+(<code>xcode-select --install</code> if Xcode is not installed).</p>
+<pre><code>git clone https://github.com/jerry42/simple-sync-s3.git
+cd simple-sync-s3
+./scripts/install.sh            # standard version
+./scripts/install.sh --sandbox  # or: App Sandbox version</code></pre>
+<p>The script builds the app, quits the running copy if there is one, copies it to
+<code>/Applications/Simple Sync S3.app</code> and launches it. A cloud icon appears in the menu bar
+(no Dock icon).</p>
+<p>The app used to be called <b>MyDropbox</b>. If that version is installed, the script quits and removes it;
+on first launch, Simple Sync S3 takes over its configuration, sync cache and Keychain secret key.
+macOS asks once more for folder access (it sees a new app). The sandboxed version starts with an empty configuration.</p>
+<p>On first launch, the app creates a configuration template and shows “Configuration needs fixing”.</p>
+<p>The interface and this help follow the macOS language: French if the system is in French, English
+otherwise. To change the language of this app only: System Settings → General → Language &amp; Region → Applications.</p>
+<p>You can always edit <code>config.json</code> by hand (menu <b>Open config.json</b>, then
+<b>Reload Configuration</b>, ⌘R): the settings window keeps the keys it does not show.</p>
+
+<h2 id="configure">2. Configure</h2>
+<ol>
+  <li>Menu ☁︎ → <b>Settings…</b> (⌘,).</li>
+  <li><b>AWS Account</b> tab: profile (the “Profiles” menu lists those in <code>~/.aws</code>) or access key, bucket, region.</li>
+  <li><b>Sync</b> tab: interval, fixed times, deletions on S3, launch at login.</li>
+  <li><b>Folders</b> tab: “+” opens a folder picker; for each folder, S3 prefix and exclusions
+  (one per line). <b>JSON</b> mode lets you paste or edit the raw list.</li>
+  <li><b>Save</b> (⌘S): the configuration is checked, written to <code>config.json</code> and reloaded.</li>
+  <li>Menu → <b>Sync Now</b> (⌘S) for a first try, then <b>Open Log</b>.</li>
+</ol>
+<pre><code>{
+  "awsProfile": "default",
+  "region": "eu-west-3",
+  "bucket": "my-bucket",
+  "deleteRemote": false,
+  "launchAtLogin": true,
+  "schedule": { "intervalMinutes": 60, "dailyTimes": ["02:00"], "syncOnLaunch": true },
+  "folders": [
+    { "localPath": "~/Documents/Invoices", "s3Prefix": "invoices", "exclude": ["*.tmp", "node_modules/"] }
+  ]
+}</code></pre>
+<table>
+  <tr><th>Key</th><th>Meaning</th></tr>
+  <tr><td><code>bucket</code></td><td>S3 bucket name (required).</td></tr>
+  <tr><td><code>region</code></td><td>Bucket region, for example <code>eu-west-3</code>. Optional with a profile that declares it in <code>~/.aws/config</code>.</td></tr>
+  <tr><td><code>awsProfile</code></td><td>AWS profile (see below). If omitted: <code>default</code>, unless <code>accessKeyId</code> is set.</td></tr>
+  <tr><td><code>accessKeyId</code>, <code>secretAccessKey</code>, <code>sessionToken</code></td><td>AWS access key, instead of the profile or as a fallback.</td></tr>
+  <tr><td><code>deleteRemote</code></td><td><code>true</code>: a file deleted from the Mac is also deleted from S3. <code>false</code> by default.</td></tr>
+  <tr><td><code>launchAtLogin</code></td><td><code>true</code>: the app starts at login.</td></tr>
+  <tr><td><code>schedule</code></td><td>When to sync (see <a href="#schedule">Schedule</a>).</td></tr>
+  <tr><td><code>folders</code></td><td>Folders to upload (see <a href="#folders">Folders</a>).</td></tr>
+</table>
+
+<h2 id="credentials">3. AWS credentials</h2>
+<p>Three ways, pick one. IAM permissions needed on the bucket: <code>s3:ListBucket</code>,
+<code>s3:PutObject</code>, and <code>s3:DeleteObject</code> if <code>deleteRemote</code> is on.</p>
+
+<h3>A. An AWS profile (<code>~/.aws</code>)</h3>
+<p><code>"awsProfile": "my-profile"</code>. Profiles with keys (<code>aws_access_key_id</code> /
+<code>aws_secret_access_key</code>) and IAM Identity Center (SSO) profiles are handled by the app itself.
+The standard version can also use <code>credential_process</code> and the AWS CLI (assume-role…).</p>
+<p><b>SSO profile</b>: when the session has expired, menu → <b>Sign In to AWS…</b>. Your browser opens
+with the code pre-filled (it is also shown in the menu): approve it, that's all. The session is shared with
+the AWS CLI (an <code>aws sso login</code> done elsewhere counts too) and renews itself as long as the
+IAM Identity Center session is valid.</p>
+
+<h3>B. An access key, secret key in the Keychain (recommended without a profile)</h3>
+<pre><code>"accessKeyId": "AKIA…",
+"region": "eu-west-3",</code></pre>
+<p>Reload the configuration, then menu → <b>Save AWS Secret Key…</b> and paste the secret key.
+It is stored in the macOS Keychain, never in a file.</p>
+
+<h3>C. Access key and secret key in <code>config.json</code></h3>
+<pre><code>"accessKeyId": "AKIA…",
+"secretAccessKey": "…",
+"region": "eu-west-3",</code></pre>
+<p>The simplest, but the secret key is stored in plain text in the file
+(<code>~/Library/Application Support/SimpleSyncS3/config.json</code>, readable by your account only).
+If the Keychain also holds a secret key for the same access key, the Keychain one is used.
+For temporary credentials, add <code>"sessionToken"</code>.</p>
+
+<div class="note">With <code>awsProfile</code> <em>and</em> <code>accessKeyId</code>, the profile comes first
+and the access key is the fallback. The source used is written to the log at every sync (shortened access key,
+never the secret key).</div>
+
+<h2 id="folders">4. Folders and exclusions</h2>
+<table>
+  <tr><th>Key</th><th>Meaning</th></tr>
+  <tr><td><code>localPath</code></td><td>Folder on the Mac. <code>~</code> = your home folder.</td></tr>
+  <tr><td><code>s3Prefix</code></td><td>“Subfolder” in the bucket. Default: the local folder's name. <code>""</code> = bucket root.</td></tr>
+  <tr><td><code>exclude</code></td><td>Patterns to skip, as in a <code>.gitignore</code>.</td></tr>
+</table>
+<table>
+  <tr><th>Pattern</th><th>Effect</th></tr>
+  <tr><td><code>*.tmp</code></td><td>All <code>.tmp</code> files, at any depth.</td></tr>
+  <tr><td><code>node_modules/</code></td><td><code>node_modules</code> folders and their content.</td></tr>
+  <tr><td><code>/drafts</code></td><td>Only <code>drafts</code> at the root of the folder.</td></tr>
+  <tr><td><code>docs/**/*.pdf</code></td><td>PDFs in <code>docs</code> and its subfolders.</td></tr>
+  <tr><td><code>!important.log</code></td><td>Re-includes a file excluded by an earlier pattern.</td></tr>
+</table>
+<p><code>.DS_Store</code> and <code>._*</code> files are always skipped.</p>
+<p>A file is uploaded if it is missing from S3 or if it changed. Files already identical on S3 are not
+uploaded again. Files over 5 GB: skipped for now.</p>
+<div class="note"><b>Deletions</b> (<code>deleteRemote</code>): never with an empty prefix (whole bucket),
+never if the local folder is empty or missing (unplugged drive), and never for an excluded file.</div>
+
+<h2 id="schedule">5. Schedule</h2>
+<table>
+  <tr><th>Key</th><th>Meaning</th></tr>
+  <tr><td><code>intervalMinutes</code></td><td>Sync every N minutes (omitted or 0: off).</td></tr>
+  <tr><td><code>dailyTimes</code></td><td>Fixed times <code>"HH:mm"</code>. A time missed while the Mac was asleep is caught up on wake.</td></tr>
+  <tr><td><code>syncOnLaunch</code></td><td>Sync when the app starts.</td></tr>
+</table>
+
+<h2 id="menu">6. The menu</h2>
+<table>
+  <tr><th>Item</th><th>Effect</th></tr>
+  <tr><td>Sync Now / Stop Sync (⌘S)</td><td>Starts or stops a sync.</td></tr>
+  <tr><td>Settings… (⌘,)</td><td>Configuration window (saves and reloads <code>config.json</code>).</td></tr>
+  <tr><td>Open config.json</td><td>Opens the file in your text editor.</td></tr>
+  <tr><td>Reload Configuration (⌘R)</td><td>After editing <code>config.json</code> by hand.</td></tr>
+  <tr><td>Open Log</td><td>Details of uploads, deletions and errors.</td></tr>
+  <tr><td>Save AWS Secret Key…</td><td>Stores the secret key in the Keychain (or removes it).</td></tr>
+  <tr><td>Sign In to AWS…</td><td>SSO profiles only: sign in through the browser.</td></tr>
+  <tr><td>Grant Access…</td><td>Sandboxed version only: grant access to <code>~/.aws</code> and the folders.</td></tr>
+  <tr><td>Help</td><td>This page.</td></tr>
+</table>
+<p>During a sync, the first line shows the current folder, the percentage and the number of files
+processed (e.g. “Dropbox: 37% (1250 / 3400)”). The icon changes during a sync, and shows an exclamation
+mark when there is an error.</p>
+
+<h2 id="sandbox">7. Sandboxed version</h2>
+<p>Installed with <code>./scripts/install.sh --sandbox</code>, the app is confined by macOS: it only sees
+the folders you show it.</p>
+<ul>
+  <li>The menu shows “Folders needing access: N”. Click <b>Grant Access…</b>: for each folder,
+  a panel opens already pointing at it; click <b>Allow</b>. Only once. A folder added with
+  “+” in the settings is granted directly.</li>
+  <li><code>~/.aws</code> is only requested if you use a profile.</li>
+  <li><code>credential_process</code> and the AWS CLI are not available: use a profile with keys, an SSO profile,
+  or an access key.</li>
+  <li>Its files are kept apart, in <code>~/Library/Containers/com.jerry42.SimpleSyncS3/Data/Library/</code>
+  (configuration in <code>Application Support/SimpleSyncS3</code>, log in <code>Logs/SimpleSyncS3</code>).
+  The standard version's configuration is not taken over: copy it, or use “Settings…”.</li>
+</ul>
+
+<h2 id="troubleshooting">8. Troubleshooting</h2>
+<p>Always start with <b>Open Log</b>: every sync writes the credential source and the
+reason for each error there.</p>
+<table>
+  <tr><th>Message</th><th>What to do</th></tr>
+  <tr><td>Configuration needs fixing</td><td>The message names the key at fault (bucket, folder, badly written time, JSON comma…).</td></tr>
+  <tr><td>IAM Identity Center sign-in required</td><td>Menu → Sign In to AWS…</td></tr>
+  <tr><td>No secret key for access key</td><td>Menu → Save AWS Secret Key…, or <code>secretAccessKey</code> in <code>config.json</code>.</td></tr>
+  <tr><td>Unknown AWS region</td><td>Add <code>"region"</code> to <code>config.json</code>.</td></tr>
+  <tr><td>S3 HTTP 403 – AccessDenied</td><td>Insufficient IAM permissions on the bucket, or wrong account.</td></tr>
+  <tr><td>S3 HTTP 301 / PermanentRedirect</td><td>The region does not match the bucket's region.</td></tr>
+  <tr><td>Access not granted (sandbox)</td><td>Menu → Grant Access…</td></tr>
+  <tr><td>macOS asks again for access to Documents or the Keychain after an update</td><td>The app is signed “ad hoc”.
+  Once: <code>./scripts/create-signing-cert.sh</code> then <code>./scripts/install.sh</code>;
+  permissions are then kept from one version to the next.</td></tr>
+</table>
+<p>Test without the interface, with a separate configuration:</p>
+<pre><code>swift run s5-sync --config ~/s5-test/config.json [--login]</code></pre>
+
+<h2 id="uninstall">9. Uninstall</h2>
+<ol>
+  <li>Set <code>"launchAtLogin": false</code>, reload the configuration, then quit the app.</li>
+  <li>Delete <code>/Applications/Simple Sync S3.app</code>.</li>
+  <li>Optional: <code>~/Library/Application Support/SimpleSyncS3</code>, <code>~/Library/Logs/SimpleSyncS3</code>,
+  <code>~/Library/Containers/com.jerry42.SimpleSyncS3</code> (sandboxed version), and the “SimpleSyncS3” Keychain item.
+  After an upgrade from the former name, the same “MyDropbox” items can be deleted too.</li>
+</ol>
+<p>Uninstalling never deletes anything from S3.</p>
+</main>
+</body>
+</html>

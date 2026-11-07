@@ -70,11 +70,11 @@ public final class AccessGrants: @unchecked Sendable {
             var stale = false
             guard let url = try? URL(resolvingBookmarkData: data, options: [.withSecurityScope],
                                      relativeTo: nil, bookmarkDataIsStale: &stale) else {
-                failures.append("\(path) : autorisation illisible, à redonner")
+                failures.append("\(path): unreadable bookmark, grant access again")
                 continue
             }
             guard url.startAccessingSecurityScopedResource() else {
-                failures.append("\(path) : accès refusé, à redonner")
+                failures.append("\(path): access denied, grant access again")
                 continue
             }
             let key = Self.normalize(url.path)
@@ -144,7 +144,7 @@ public final class AccessGrants: @unchecked Sendable {
                                                     withIntermediateDirectories: true)
             try JSONEncoder().encode(bookmarks).write(to: storeURL, options: .atomic)
         } catch {
-            Log.info("Autorisations d'accès non enregistrées : \(error.localizedDescription)")
+            Log.info("Access grants not saved: \(error.localizedDescription)")
         }
     }
 }

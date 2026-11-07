@@ -41,7 +41,7 @@ final class SyncStateStore {
             try data.write(to: url, options: .atomic)
             dirty = false
         } catch {
-            Log.info("Impossible d'enregistrer l'état : \(error.localizedDescription)")
+            Log.info("Could not save the sync state: \(error.localizedDescription)")
         }
     }
 }

@@ -19,20 +19,20 @@ enum AWSCredentialError: LocalizedError {
         switch self {
         case .noCredentials(let profile):
             if Sandbox.isActive {
-                return "Aucun identifiant AWS trouvé pour le profil « \(profile) » (ni clés, ni SSO)."
+                return L10n.tr("No AWS credentials found for profile “%@” (no keys, no SSO).", profile)
             }
-            return "Aucun identifiant AWS trouvé pour le profil « \(profile) » (ni clés, ni SSO, ni credential_process, ni AWS CLI)."
+            return L10n.tr("No AWS credentials found for profile “%@” (no keys, SSO, credential_process or AWS CLI).", profile)
         case .awsDirNotAuthorized:
-            return "Accès à ~/.aws non autorisé (sandbox) : menu « Autoriser l'accès… »."
+            return L10n.tr("Access to ~/.aws not granted (sandbox): use the “Grant Access…” menu.")
         case .unavailableInSandbox(let profile, let feature):
-            return "Profil « \(profile) » : \(feature) indisponible dans la version sandbox "
-                + "(utilise un profil à clés ou SSO, ou une clé d'accès dans config.json)."
+            return L10n.tr("Profile “%@”: %@ is not available in the sandboxed version "
+                          + "(use a profile with keys or SSO, or an access key in config.json).", profile, feature)
         case .processFailed(let message):
-            return "Échec de récupération des identifiants AWS : \(message)"
+            return L10n.tr("Could not get AWS credentials: %@", message)
         case .notConfigured:
-            return "Ni profil AWS ni clé d'accès dans config.json."
+            return L10n.tr("No AWS profile or access key in config.json.")
         case .unavailable(let reasons):
-            return "Identifiants AWS indisponibles : " + reasons.joined(separator: " ; ")
+            return L10n.tr("AWS credentials unavailable: %@", reasons.joined(separator: "; "))
         }
     }
 }
@@ -195,7 +195,7 @@ struct ProfileCredentials {
 
         guard process.terminationStatus == 0 else {
             let message = String(decoding: errData, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
-            throw AWSCredentialError.processFailed(message.isEmpty ? "code \(process.terminationStatus)" : message)
+            throw AWSCredentialError.processFailed(message.isEmpty ? L10n.tr("exit code %lld", Int(process.terminationStatus)) : message)
         }
 
         struct ProcessOutput: Decodable {
@@ -208,7 +208,7 @@ struct ProfileCredentials {
         do {
             output = try JSONDecoder().decode(ProcessOutput.self, from: data)
         } catch {
-            throw AWSCredentialError.processFailed("réponse JSON illisible")
+            throw AWSCredentialError.processFailed(L10n.tr("unreadable JSON response"))
         }
         return AWSCredentials(accessKeyId: output.AccessKeyId,
                               secretAccessKey: output.SecretAccessKey,
@@ -316,18 +316,18 @@ final class AWSCredentialProvider {
         if let profile {
             do {
                 let credentials = try loadProfile(profile)
-                log("Identifiants AWS : profil « \(profile) »")
+                log("AWS credentials: profile “\(profile)”")
                 return (credentials, .profile(profile))
             } catch {
                 guard staticKey != nil else {
                     throw AWSCredentialError.unavailable([
-                        "profil « \(profile) » : \(error.localizedDescription)",
-                        "pour utiliser une clé d'accès à la place, ajoute \"accessKeyId\" dans config.json",
+                        L10n.tr("profile “%@”: %@", profile, error.localizedDescription),
+                        L10n.tr("to use an access key instead, add \"accessKeyId\" to config.json"),
                     ])
                 }
-                failures.append("profil « \(profile) » : \(error.localizedDescription)")
-                log("Profil AWS « \(profile) » indisponible (\(error.localizedDescription)), "
-                    + "bascule sur la clé d'accès de config.json")
+                failures.append(L10n.tr("profile “%@”: %@", profile, error.localizedDescription))
+                log("AWS profile “\(profile)” unavailable (\(error.localizedDescription)), "
+                    + "falling back to the access key from config.json")
             }
         }
         guard let key = staticKey else { throw AWSCredentialError.notConfigured }
@@ -335,24 +335,23 @@ final class AWSCredentialProvider {
 
         do {
             if let secret = try secretStore.secret(for: key.accessKeyId) {
-                log("Identifiants AWS : clé d'accès \(masked), clé secrète du trousseau")
+                log("AWS credentials: access key \(masked), secret key from the Keychain")
                 return (AWSCredentials(accessKeyId: key.accessKeyId, secretAccessKey: secret,
                                        sessionToken: key.sessionToken, expiration: nil), .keychain)
             }
         } catch {
-            failures.append("trousseau : \(error.localizedDescription)")
+            failures.append(L10n.tr("Keychain: %@", error.localizedDescription))
         }
 
         if let secret = key.plaintextSecret {
-            log("Identifiants AWS : clé d'accès \(masked), clé secrète lue dans config.json (en clair). "
-                + "Plus sûr : le trousseau (menu « Enregistrer la clé secrète AWS… »), "
-                + "puis retirer \"secretAccessKey\" de config.json.")
+            log("AWS credentials: access key \(masked), secret key read from config.json (plain text). "
+                + "Safer: the Keychain (“Save AWS Secret Key…” menu), "
+                + "then remove \"secretAccessKey\" from config.json.")
             return (AWSCredentials(accessKeyId: key.accessKeyId, secretAccessKey: secret,
                                    sessionToken: key.sessionToken, expiration: nil), .configFile)
         }
 
-        failures.append("aucune clé secrète pour la clé d'accès \(masked) "
-                        + "(menu « Enregistrer la clé secrète AWS… »)")
+        failures.append(L10n.tr("no secret key for access key %@ (“Save AWS Secret Key…” menu)", masked))
         throw AWSCredentialError.unavailable(failures)
     }
 }

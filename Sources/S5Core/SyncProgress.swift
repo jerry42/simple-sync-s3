@@ -6,11 +6,11 @@ import Foundation
 public enum SyncProgress {
     static let figureSpace = "\u{2007}"
 
-    /// « Dropbox :  37 % ( 120 / 1234) » : `done` fichiers traités sur `total` (espaces de chiffre en tête).
+    /// « Dropbox:  37% ( 120 / 1234) » (en français « Dropbox :  37 % ( 120 / 1234) ») : `done` fichiers traités sur `total` (espaces de chiffre en tête).
     public static func files(folder: String, done: Int, total: Int) -> String {
         let percent = total > 0 ? min(100, done * 100 / total) : 100
         let totalText = String(total)
-        return "\(folder) : \(pad(String(percent), to: 3)) % (\(pad(String(done), to: totalText.count)) / \(totalText))"
+        return L10n.tr("%@: %@%% (%@ / %@)", folder, pad(String(percent), to: 3), pad(String(done), to: totalText.count), totalText)
     }
 
     static func pad(_ text: String, to width: Int) -> String {

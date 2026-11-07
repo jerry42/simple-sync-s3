@@ -1,0 +1,4 @@
+/* Simple Sync S3 – English (development language).
+   The keys used in the code are already the English texts, so nothing needs translating here.
+   This file only makes English an available localization: a system set to a language the app does not
+   support (German, Spanish…) then gets English, not French. Translations go in <language>.lproj. */

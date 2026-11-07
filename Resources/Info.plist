@@ -2,6 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>fr</string>
+    </array>
     <key>CFBundleName</key>
     <string>Simple Sync S3</string>
     <key>CFBundleDisplayName</key>
@@ -23,14 +30,14 @@
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSDocumentsFolderUsageDescription</key>
-    <string>Simple Sync S3 lit les dossiers de Documents que tu as choisis pour les envoyer sur S3.</string>
+    <string>Simple Sync S3 reads the folders you chose in Documents to upload them to S3.</string>
     <key>NSDesktopFolderUsageDescription</key>
-    <string>Simple Sync S3 lit les dossiers du Bureau que tu as choisis pour les envoyer sur S3.</string>
+    <string>Simple Sync S3 reads the folders you chose on the Desktop to upload them to S3.</string>
     <key>NSDownloadsFolderUsageDescription</key>
-    <string>Simple Sync S3 lit les dossiers de Téléchargements que tu as choisis pour les envoyer sur S3.</string>
+    <string>Simple Sync S3 reads the folders you chose in Downloads to upload them to S3.</string>
     <key>NSRemovableVolumesUsageDescription</key>
-    <string>Simple Sync S3 lit les dossiers des disques externes que tu as choisis pour les envoyer sur S3.</string>
+    <string>Simple Sync S3 reads the folders you chose on external drives to upload them to S3.</string>
     <key>NSNetworkVolumesUsageDescription</key>
-    <string>Simple Sync S3 lit les dossiers réseau que tu as choisis pour les envoyer sur S3.</string>
+    <string>Simple Sync S3 reads the network folders you chose to upload them to S3.</string>
 </dict>
 </plist>

@@ -12,7 +12,7 @@ KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 
 for EXISTING in "$NAME" "MyDropbox Local Signing"; do
     if security find-certificate -c "$EXISTING" "$KEYCHAIN" >/dev/null 2>&1; then
-        echo "Le certificat « $EXISTING » existe déjà : rien à faire (build-app.sh l'utilise)."
+        echo "Certificate \"$EXISTING\" already exists: nothing to do (build-app.sh uses it)."
         exit 0
     fi
 done
@@ -42,5 +42,5 @@ CNF
 # -T : codesign peut utiliser la clé sans demander à chaque compilation.
 security import "$TMP/identity.p12" -k "$KEYCHAIN" -P "$PASS" -T /usr/bin/codesign >/dev/null
 
-echo "Certificat « $NAME » créé dans le trousseau de session (valable 10 ans)."
-echo "Relance ./scripts/install.sh : macOS redemandera l'accès à Documents une dernière fois."
+echo "Certificate \"$NAME\" created in your login keychain (valid 10 years)."
+echo "Run ./scripts/install.sh again: macOS will ask for access to Documents one last time."

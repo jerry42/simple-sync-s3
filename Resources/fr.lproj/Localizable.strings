@@ -1,0 +1,184 @@
+/* Simple Sync S3 – French translation.
+   Keys are the English texts used in the code (development language: English).
+   Format: "%@" = text, "%lld" = number; keep them in the same order. */
+
+/* MARK: - Menu */
+"Last sync: %@" = "Dernière synchro : %@";
+"Folders needing access: %lld" = "Accès à autoriser : %lld dossier(s)";
+"Sync Now" = "Synchroniser maintenant";
+"Stop Sync" = "Arrêter la synchro";
+"Settings…" = "Réglages…";
+"Open config.json" = "Ouvrir config.json";
+"Reload Configuration" = "Recharger la configuration";
+"Open Log" = "Ouvrir le journal";
+"Save AWS Secret Key…" = "Enregistrer la clé secrète AWS…";
+"Sign In to AWS…" = "Se connecter à AWS…";
+"Cancel AWS Sign-In" = "Annuler la connexion à AWS";
+"Grant Access…" = "Autoriser l'accès…";
+"Help" = "Aide";
+"Quit Simple Sync S3" = "Quitter Simple Sync S3";
+
+/* MARK: - Status line */
+"Ready" = "Prêt";
+"Stopping…" = "Arrêt en cours…";
+"Syncing…" = "Synchronisation…";
+"Up to date" = "À jour";
+"Finished with errors" = "Terminé avec des erreurs";
+"Configuration needs fixing" = "Configuration à corriger";
+"No configuration" = "Configuration absente";
+"Signing in to AWS…" = "Connexion à AWS…";
+"Code %@: approve it in your browser" = "Code %@ : valide-le dans le navigateur";
+"Signed in to AWS" = "Connecté à AWS";
+"AWS sign-in cancelled" = "Connexion AWS annulée";
+"AWS sign-in failed" = "Connexion AWS échouée";
+"Secret key saved" = "Clé secrète enregistrée";
+"Secret key deleted" = "Clé secrète supprimée";
+"%@: scanning…" = "%@ : analyse…";
+"%@: deleting…" = "%@ : suppressions…";
+"%@: %@%% (%@ / %@)" = "%@ : %@ %% (%@ / %@)";
+
+/* MARK: - Sync report */
+"%lld uploaded" = "%lld envoyé(s)";
+"%lld deleted" = "%lld supprimé(s)";
+"%lld unchanged" = "%lld inchangé(s)";
+"%lld error(s)" = "%lld erreur(s)";
+"interrupted" = "interrompue";
+"%@: %@" = "%@ : %@";
+"delete %@: %@" = "suppression %@ : %@";
+
+/* MARK: - Alerts and panels */
+"Can’t sync: the configuration needs fixing" = "Synchro impossible : configuration à corriger";
+"Fix the configuration (“Settings…” menu), then sync again." = "Corrige la configuration (menu « Réglages… ») puis relance la synchro.";
+"Simple Sync S3 needs access to “%@”. Select this folder, then click “Allow”." = "Simple Sync S3 a besoin d'accéder à « %@ ». Sélectionne ce dossier puis clique « Autoriser ».";
+"Allow" = "Autoriser";
+"Could not grant access" = "Autorisation impossible";
+"AWS Sign-In" = "Connexion à AWS";
+"No access key configured" = "Aucune clé d'accès configurée";
+"Enter the access key in “Settings…” (AWS Account tab), then save." = "Renseigne la clé d'accès dans « Réglages… » (onglet Compte AWS), puis enregistre.";
+"AWS Secret Key" = "Clé secrète AWS";
+"Access key: %@" = "Clé d'accès : %@";
+"A secret key is already in the Keychain; what you enter replaces it." = "Une clé secrète est déjà dans le trousseau ; la saisie la remplace.";
+"The secret key will be saved in the macOS Keychain." = "La clé secrète sera enregistrée dans le trousseau macOS.";
+"Secret key" = "Clé secrète";
+"Save" = "Enregistrer";
+"Cancel" = "Annuler";
+"Don’t Save" = "Ne pas enregistrer";
+"Delete Key from Keychain" = "Supprimer la clé du trousseau";
+"Keychain" = "Trousseau";
+"Simple Sync S3 Settings" = "Réglages de Simple Sync S3";
+"Save your changes?" = "Enregistrer les modifications ?";
+"The changed settings have not been written to config.json yet." = "Les réglages modifiés ne sont pas encore écrits dans config.json.";
+"Choose one or more folders to sync." = "Choisis un ou plusieurs dossiers à synchroniser.";
+"Add" = "Ajouter";
+"Choose the folder to sync." = "Choisis le dossier à synchroniser.";
+"Choose" = "Choisir";
+
+/* MARK: - Settings window */
+"Saved. Some folders still need access: click “Grant Access…”." = "Enregistré. Des dossiers restent à autoriser : bouton « Autoriser l'accès… ».";
+"Configuration saved." = "Configuration enregistrée.";
+"config.json can’t be read" = "config.json ne peut pas être lu";
+"Fix the file in a text editor, then click “Reload”." = "Corrige le fichier dans un éditeur de texte, puis clique « Relire ».";
+"Reload" = "Relire";
+"Revert Changes" = "Annuler les modifications";
+"AWS Account" = "Compte AWS";
+"Sync" = "Synchro";
+"Folders" = "Dossiers";
+"AWS profile" = "Profil AWS";
+"Profiles" = "Profils";
+"IAM Identity Center (SSO) profile." = "Profil IAM Identity Center (SSO).";
+"Cancel Sign-In" = "Annuler la connexion";
+"Profile (~/.aws)" = "Profil (~/.aws)";
+"Keys, IAM Identity Center (SSO) or credential_process. Empty: the “default” profile, unless an access key is entered below." = "Clés, IAM Identity Center (SSO) ou credential_process. Vide : profil « default », sauf si une clé d'accès est renseignée ci-dessous.";
+"none (access key only)" = "aucun (clé d'accès seule)";
+"Access key ID" = "Clé d'accès (Access Key ID)";
+"A secret key is stored in plain text in config.json (not recommended)." = "Une clé secrète est écrite en clair dans config.json (déconseillé).";
+"The secret key is kept in the macOS Keychain." = "La clé secrète est gardée dans le trousseau macOS.";
+"Secret Key…" = "Clé secrète…";
+"Access key (optional)" = "Clé d'accès (facultatif)";
+"Used on its own if the profile is empty, otherwise as a fallback when the profile doesn’t work. Save first so the access key is taken into account." = "Utilisée seule si le profil est vide, sinon en secours si le profil ne fonctionne pas. Enregistre d'abord pour que la clé d'accès soit prise en compte.";
+"S3 Bucket" = "Bucket S3";
+"Bucket" = "Bucket";
+"my-bucket" = "mon-bucket";
+"Region" = "Région";
+"from the profile (e.g. eu-west-3)" = "celle du profil (ex. eu-west-3)";
+"Schedule" = "Planification";
+"Sync at regular intervals" = "Synchroniser à intervalle régulier";
+"Every" = "Toutes les";
+"minutes" = "minutes";
+"Fixed times" = "Heures fixes";
+"e.g. 02:00, 13:30" = "ex. 02:00, 13:30";
+"Sync when the app launches" = "Synchroniser au lancement de l'app";
+"Deletions" = "Suppressions";
+"Delete from S3 the files deleted locally" = "Supprimer sur S3 les fichiers supprimés en local";
+"Never for a folder synced to the bucket root, nor for an empty local folder." = "Jamais pour un dossier envoyé à la racine du bucket, ni pour un dossier local vide.";
+"Startup" = "Démarrage";
+"Launch Simple Sync S3 at login" = "Lancer Simple Sync S3 à l'ouverture de session";
+"View" = "Affichage";
+"List" = "Liste";
+"Add folders" = "Ajouter des dossiers";
+"Remove the folder from the list (nothing is deleted)" = "Retirer le dossier de la liste (rien n'est supprimé)";
+"No folders: click “+” to add one." = "Aucun dossier : clique « + » pour en ajouter.";
+"Select a folder." = "Sélectionne un dossier.";
+"Array of objects: localPath (required), s3Prefix, exclude. Checked when switching back to List and when saving." = "Tableau d'objets : localPath (obligatoire), s3Prefix, exclude. Vérifié au retour en mode Liste et à l'enregistrement.";
+"Local folder" = "Dossier local";
+"Choose…" = "Choisir…";
+"Upload to the bucket root" = "Envoyer à la racine du bucket";
+"S3 prefix" = "Préfixe S3";
+"root" = "racine";
+"Exclusions (one per line, .gitignore syntax)" = "Exclusions (une par ligne, syntaxe .gitignore)";
+"E.g. *.tmp, node_modules/, /build, !keep.log" = "Ex. *.tmp, node_modules/, /build, !garder.log";
+
+/* MARK: - Configuration errors */
+"Configuration file created, fill it in: %@" = "Fichier de configuration créé, à compléter : %@";
+"Invalid configuration: %@" = "Configuration invalide : %@";
+"missing key “%@”" = "clé manquante « %@ »";
+"wrong type for “%@”" = "type incorrect pour « %@ »";
+"enter the bucket name" = "renseigne le nom du bucket";
+"no folder to sync" = "aucun dossier à synchroniser";
+"“secretAccessKey” and “sessionToken” require “accessKeyId”" = "« secretAccessKey » et « sessionToken » demandent « accessKeyId »";
+"invalid time “%@” (format HH:mm)" = "heure « %@ » invalide (format HH:mm)";
+"each folder must be a JSON object" = "chaque dossier doit être un objet JSON";
+"each folder needs a “localPath”" = "chaque dossier doit avoir un « localPath »";
+"unreadable JSON (%@)" = "JSON illisible (%@)";
+"the file must contain a JSON object" = "le fichier doit contenir un objet JSON";
+"unreadable folder JSON (%@)" = "JSON des dossiers illisible (%@)";
+"the folder list must be a JSON array [ … ]" = "la liste des dossiers doit être un tableau JSON [ … ]";
+
+/* MARK: - AWS credentials */
+"No AWS credentials found for profile “%@” (no keys, no SSO)." = "Aucun identifiant AWS trouvé pour le profil « %@ » (ni clés, ni SSO).";
+"No AWS credentials found for profile “%@” (no keys, SSO, credential_process or AWS CLI)." = "Aucun identifiant AWS trouvé pour le profil « %@ » (ni clés, ni SSO, ni credential_process, ni AWS CLI).";
+"Access to ~/.aws not granted (sandbox): use the “Grant Access…” menu." = "Accès à ~/.aws non autorisé (sandbox) : menu « Autoriser l'accès… ».";
+"Profile “%@”: %@ is not available in the sandboxed version (use a profile with keys or SSO, or an access key in config.json)." = "Profil « %@ » : %@ indisponible dans la version sandbox (utilise un profil à clés ou SSO, ou une clé d'accès dans config.json).";
+"Could not get AWS credentials: %@" = "Échec de récupération des identifiants AWS : %@";
+"No AWS profile or access key in config.json." = "Ni profil AWS ni clé d'accès dans config.json.";
+"AWS credentials unavailable: %@" = "Identifiants AWS indisponibles : %@";
+"exit code %lld" = "code %lld";
+"unreadable JSON response" = "réponse JSON illisible";
+"profile “%@”: %@" = "profil « %@ » : %@";
+"to use an access key instead, add \"accessKeyId\" to config.json" = "pour utiliser une clé d'accès à la place, ajoute \"accessKeyId\" dans config.json";
+"Keychain: %@" = "trousseau : %@";
+"no secret key for access key %@ (“Save AWS Secret Key…” menu)" = "aucune clé secrète pour la clé d'accès %@ (menu « Enregistrer la clé secrète AWS… »)";
+"unknown error" = "erreur inconnue";
+"Keychain: %@ (%lld)" = "Trousseau : %@ (%lld)";
+"Simple Sync S3 – AWS secret key" = "Simple Sync S3 – clé secrète AWS";
+
+/* MARK: - IAM Identity Center (SSO) */
+"SSO profile “%@” is incomplete in ~/.aws/config: %@ missing." = "Profil SSO « %@ » incomplet dans ~/.aws/config : %@ manquant.";
+"IAM Identity Center sign-in required for profile “%@” (“Sign In to AWS…” menu, or s5-sync --login)." = "Connexion IAM Identity Center requise pour le profil « %@ » (menu « Se connecter à AWS… », ou s5-sync --login).";
+"IAM Identity Center sign-in failed: %@" = "Connexion IAM Identity Center impossible : %@";
+"IAM Identity Center sign-in cancelled." = "Connexion IAM Identity Center annulée.";
+"invalid portal URL" = "URL du portail invalide";
+"unreadable GetRoleCredentials response" = "réponse GetRoleCredentials illisible";
+"invalid verification URL" = "URL de validation invalide";
+"code expired before it was approved" = "code expiré avant validation";
+"authorization denied in the browser" = "autorisation refusée dans le navigateur";
+"invalid OIDC URL" = "URL OIDC invalide";
+"unreadable %@ response" = "réponse %@ illisible";
+"profile “%@” is not an IAM Identity Center profile" = "le profil « %@ » n'est pas un profil IAM Identity Center";
+
+/* MARK: - S3 and sync errors */
+"Invalid S3 response" = "Réponse S3 invalide";
+"Unknown AWS region: add \"region\" to config.json (or to ~/.aws/config for the profile)." = "Région AWS inconnue : ajoute \"region\" dans config.json (ou dans ~/.aws/config pour le profil).";
+"Folder not found: %@ (skipped, nothing is deleted from S3)" = "Dossier introuvable : %@ (ignoré, rien n'est supprimé sur S3)";
+"Access not granted (sandbox): %@ (“Grant Access…” menu; nothing is deleted from S3)" = "Accès non autorisé (sandbox) : %@ (menu « Autoriser l'accès… » ; rien n'est supprimé sur S3)";
+"Files over 5 GB are not supported yet: %@" = "Fichier de plus de 5 Go non géré pour l'instant : %@";

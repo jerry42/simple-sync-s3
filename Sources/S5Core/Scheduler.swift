@@ -22,12 +22,12 @@ public struct Scheduler {
         lastCheck = date
     }
 
-    /// Renvoie la raison de lancer une synchro maintenant, ou nil.
+    /// Renvoie la raison de lancer une synchro maintenant (en anglais, pour le journal), ou nil.
     public mutating func shouldSync(schedule: ScheduleConfig, now: Date = Date()) -> String? {
         defer { lastCheck = now }
         if let minutes = schedule.intervalMinutes, minutes > 0,
            now.timeIntervalSince(lastSyncStart) >= Double(minutes) * 60 {
-            return "intervalle de \(minutes) min"
+            return "every \(minutes) min"
         }
         for time in schedule.dailyTimes ?? [] {
             guard let (h, m) = Self.parseTime(time) else { continue }
@@ -36,7 +36,7 @@ public struct Scheduler {
                 guard let day = Calendar.current.date(byAdding: .day, value: dayOffset, to: now),
                       let fire = Calendar.current.date(bySettingHour: h, minute: m, second: 0, of: day)
                 else { continue }
-                if fire <= now && fire > lastCheck { return "heure planifiée \(time)" }
+                if fire <= now && fire > lastCheck { return "scheduled time \(time)" }
             }
         }
         return nil

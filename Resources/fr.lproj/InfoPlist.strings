@@ -1,0 +1,6 @@
+/* Simple Sync S3 – French texts of Info.plist (folder access prompts). */
+"NSDocumentsFolderUsageDescription" = "Simple Sync S3 lit les dossiers de Documents que tu as choisis pour les envoyer sur S3.";
+"NSDesktopFolderUsageDescription" = "Simple Sync S3 lit les dossiers du Bureau que tu as choisis pour les envoyer sur S3.";
+"NSDownloadsFolderUsageDescription" = "Simple Sync S3 lit les dossiers de Téléchargements que tu as choisis pour les envoyer sur S3.";
+"NSRemovableVolumesUsageDescription" = "Simple Sync S3 lit les dossiers des disques externes que tu as choisis pour les envoyer sur S3.";
+"NSNetworkVolumesUsageDescription" = "Simple Sync S3 lit les dossiers réseau que tu as choisis pour les envoyer sur S3.";
