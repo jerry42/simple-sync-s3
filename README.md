@@ -1,5 +1,10 @@
 # Simple Sync S3 (S5)
 
+[![CI](https://github.com/jerry42/simple-sync-s3/actions/workflows/ci.yml/badge.svg)](https://github.com/jerry42/simple-sync-s3/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/jerry42/simple-sync-s3)](https://github.com/jerry42/simple-sync-s3/releases/latest)
+[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
+![macOS 13+](https://img.shields.io/badge/macOS-13%2B-lightgrey.svg)
+
 A small macOS menu bar app that backs up chosen local folders to an Amazon S3 bucket.
 
 - **One-way sync, Mac → S3.** New and changed files are uploaded; nothing is ever downloaded or
@@ -19,6 +24,7 @@ A small macOS menu bar app that backs up chosen local folders to an Amazon S3 bu
 ## Contents
 
 - [Requirements](#requirements)
+- [Download a release](#download-a-release)
 - [Build and install](#build-and-install)
 - [First-time setup](#first-time-setup)
 - [Configuration reference](#configuration-reference)
@@ -38,14 +44,40 @@ A small macOS menu bar app that backs up chosen local folders to an Amazon S3 bu
 ## Requirements
 
 - macOS 13 Ventura or later (Apple silicon or Intel).
-- Swift 5.9 or later: Xcode, or just the Command Line Tools (`xcode-select --install`).
+- To build from source: Swift 5.9 or later, from Xcode or just the Command Line Tools (`xcode-select --install`).
 - An S3 bucket, and AWS credentials allowed to write to it (see [Minimal IAM policy](#minimal-iam-policy)).
 - Optional: the [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html),
   only needed for profiles that use `role_arn` / `source_profile` (assume-role).
 
-There is no pre-built download yet: you build the app from source, which takes about a minute.
+## Download a release
+
+1. Download `SimpleSyncS3-<version>-macOS.zip` from the [latest release](https://github.com/jerry42/simple-sync-s3/releases/latest)
+   and unzip it.
+2. Move **Simple Sync S3.app** to `/Applications`.
+3. The app is not notarized by Apple, so macOS blocks it the first time ("Apple could not verify…").
+   Either open it once, then go to System Settings → Privacy & Security and click **Open Anyway**,
+   or remove the quarantine flag in Terminal:
+
+   ```bash
+   xattr -dr com.apple.quarantine "/Applications/Simple Sync S3.app"
+   ```
+
+4. Open the app: a cloud icon appears in the menu bar. Continue with [First-time setup](#first-time-setup).
+
+The downloaded app is signed *ad hoc*, so macOS asks again for access to your folders after each update
+(see [Why the signing certificate?](#why-the-signing-certificate)). If that bothers you, build from source,
+or re-sign the downloaded app with your own certificate after each update:
+
+```bash
+./scripts/create-signing-cert.sh    # once, from a clone of this repository
+codesign --force --sign "Simple Sync S3 Local Signing" "/Applications/Simple Sync S3.app"
+```
+
+The release also contains the `s5-sync` [command-line tool](#command-line-sync) and a `SHA256SUMS.txt` file.
 
 ## Build and install
+
+Building from source takes about a minute.
 
 ```bash
 git clone https://github.com/jerry42/simple-sync-s3.git
@@ -389,15 +421,20 @@ open Package.swift       # or open the package in Xcode
 - `Sources/SimpleSyncS3`: the SwiftUI menu bar app and settings window.
 - `Sources/s5-sync`: the command-line target.
 - `Resources`: `Info.plist`, entitlements, and one `<language>.lproj` folder per language (see [Languages](#languages)).
+- `.github/workflows`: CI (build and tests on every push and pull request) and the release workflow.
 - `Tests/S5Tests`: SigV4 is checked against the examples from the AWS documentation and values computed
   by botocore; SSO uses a fake HTTP transport.
+
+To publish a release: add a section for the new version to [`CHANGELOG.md`](CHANGELOG.md), then push a tag
+`vX.Y.Z` (or run the **Release** workflow from the Actions tab with the version). The workflow runs the tests,
+builds the universal app and `s5-sync`, and publishes them with the changelog section as release notes.
 
 ## Limitations
 
 - Files larger than 5 GB are skipped (no multipart upload yet).
 - One-way only: nothing is restored from S3. Use the AWS console, the AWS CLI (`aws s3 sync s3://bucket/prefix ./restore`)
   or any S3 client to get files back.
-- Not notarized: build it yourself as described above.
+- Not notarized by Apple: see [Download a release](#download-a-release) for how to open it, or build it yourself.
 
 ## License
 

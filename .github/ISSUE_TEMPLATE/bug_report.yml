@@ -1,0 +1,46 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Before pasting logs or configuration, **remove anything private**:
+        bucket names, account IDs, access keys, profile names, file paths you do not want to share.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Downloaded release (e.g. 1.0.0) or commit you built from.
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and Mac
+      placeholder: macOS 15.1, Apple silicon
+    validations:
+      required: true
+  - type: dropdown
+    id: credentials
+    attributes:
+      label: Credentials used
+      options:
+        - Static keys in ~/.aws
+        - IAM Identity Center (SSO)
+        - credential_process / AWS CLI (assume-role)
+        - Access key + Keychain
+        - Other / not sure
+  - type: textarea
+    id: log
+    attributes:
+      label: Log excerpt
+      description: From ~/Library/Logs/SimpleSyncS3/sync.log (menu → Open Log). Redact private details.
+      render: text

@@ -2,6 +2,10 @@
 # Compile en release et emballe le binaire dans « build/Simple Sync S3.app »
 #   ./scripts/build-app.sh            app sans sandbox (comportement habituel)
 #   ./scripts/build-app.sh --sandbox  app signée avec Resources/SimpleSyncS3.entitlements (App Sandbox)
+# Variables facultatives :
+#   S5_UNIVERSAL=1      binaire universel (Apple silicon + Intel), utilisé pour les releases
+#   S5_VERSION=1.2.3    remplace CFBundleShortVersionString dans l'Info.plist de l'app
+#   S5_SIGN_IDENTITY=…  identité de signature (voir plus bas)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -12,14 +16,19 @@ case "${1:-}" in
     *) echo "Usage: $0 [--sandbox]" >&2; exit 2 ;;
 esac
 
-swift build -c release
-BIN_DIR=$(swift build -c release --show-bin-path)
+BUILD_ARGS=(-c release)
+if [ "${S5_UNIVERSAL:-0}" = 1 ]; then BUILD_ARGS+=(--arch arm64 --arch x86_64); fi
+swift build "${BUILD_ARGS[@]}"
+BIN_DIR=$(swift build "${BUILD_ARGS[@]}" --show-bin-path)
 APP="build/Simple Sync S3.app"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_DIR/SimpleSyncS3" "$APP/Contents/MacOS/SimpleSyncS3"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+if [ -n "${S5_VERSION:-}" ]; then
+    /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $S5_VERSION" "$APP/Contents/Info.plist"
+fi
 # Traductions (Localizable.strings, InfoPlist.strings) et page d'aide, une copie par langue.
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
 # Signature : identité de S5_SIGN_IDENTITY, sinon le certificat local créé par create-signing-cert.sh

@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift version
+        run: swift --version
+      - name: Build
+        run: swift build
+      - name: Test
+        run: swift test
+      - name: Build the app bundle (universal, as for a release)
+        env:
+          S5_UNIVERSAL: '1'
+        run: |
+          ./scripts/build-app.sh
+          lipo -info "build/Simple Sync S3.app/Contents/MacOS/SimpleSyncS3"
