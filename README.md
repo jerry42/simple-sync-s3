@@ -61,14 +61,6 @@ cd simple-sync-s3
 A cloud icon appears in the menu bar. Run `./scripts/install.sh` again after a `git pull` to update; it quits
 the running copy first.
 
-### Upgrading from MyDropbox
-
-The app used to be called *MyDropbox*. `install.sh` quits and removes `/Applications/MyDropbox.app` if it is
-there. On first launch, Simple Sync S3 copies the old `~/Library/Application Support/MyDropbox/` folder
-(configuration, sync cache, folder grants) and picks up the secret key stored in the Keychain under the old name,
-so nothing has to be set up again. macOS asks once more for folder access, since it sees a new app.
-The sandboxed build cannot read the old container and starts with a fresh configuration.
-
 ### Why the signing certificate?
 
 Without a real certificate the app is signed *ad hoc*, and macOS only recognizes it by the exact hash of its
