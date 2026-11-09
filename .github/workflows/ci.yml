@@ -26,3 +26,6 @@ jobs:
         run: |
           ./scripts/build-app.sh
           lipo -info "build/Simple Sync S3.app/Contents/MacOS/SimpleSyncS3"
+          test -s "build/Simple Sync S3.app/Contents/Resources/AppIcon.icns"
+          iconutil --convert iconset --output AppIcon.iconset "build/Simple Sync S3.app/Contents/Resources/AppIcon.icns"
+          ls AppIcon.iconset

@@ -1,3 +1,5 @@
+<img src="Resources/AppIcon/AppIcon.png" alt="Simple Sync S3 icon" width="128" align="right">
+
 # Simple Sync S3 (S5)
 
 [![CI](https://github.com/jerry42/simple-sync-s3/actions/workflows/ci.yml/badge.svg)](https://github.com/jerry42/simple-sync-s3/actions/workflows/ci.yml)
