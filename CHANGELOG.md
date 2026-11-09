@@ -2,7 +2,7 @@
 
 All notable changes to Simple Sync S3 are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.1] - 2026-11-09
 
 ### Added
 
@@ -46,4 +46,5 @@ First public release.
 - Files larger than 5 GB are skipped (no multipart upload yet).
 - One-way only: nothing is restored from S3.
 
+[1.0.1]: https://github.com/jerry42/simple-sync-s3/releases/tag/v1.0.1
 [1.0.0]: https://github.com/jerry42/simple-sync-s3/releases/tag/v1.0.0
