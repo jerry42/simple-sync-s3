@@ -2,6 +2,13 @@
 
 All notable changes to Simple Sync S3 are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- App icon (cloud with sync arrows), shown in Finder, Launchpad and the Settings window. Source SVG in
+  `Resources/AppIcon/`, regenerate the `.icns` with `scripts/make-icon.py`.
+
 ## [1.0.0] - 2026-11-09
 
 First public release.

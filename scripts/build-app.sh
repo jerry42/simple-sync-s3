@@ -31,6 +31,8 @@ if [ -n "${S5_VERSION:-}" ]; then
 fi
 # Traductions (Localizable.strings, InfoPlist.strings) et page d'aide, une copie par langue.
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
+# Icône de l'app (source : Resources/AppIcon/AppIcon.svg, régénérée par scripts/make-icon.py).
+cp Resources/AppIcon/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 # Signature : identité de S5_SIGN_IDENTITY, sinon le certificat local créé par create-signing-cert.sh
 # (ou celui de l'ancien nom de l'app), sinon « ad hoc » (macOS redemande alors les autorisations
 # après chaque compilation).
