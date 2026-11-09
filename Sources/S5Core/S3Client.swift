@@ -22,7 +22,7 @@ enum S3Error: LocalizedError {
         }
     }
 
-    private static func extract(tag: String, from body: String) -> String? {
+    static func extract(tag: String, from body: String) -> String? {
         guard let start = body.range(of: "<\(tag)>"),
               let end = body.range(of: "</\(tag)>", range: start.upperBound..<body.endIndex) else { return nil }
         return String(body[start.upperBound..<end.lowerBound])
@@ -36,6 +36,14 @@ final class S3Client {
     let region: String
     private let credentials: AWSCredentialProvider
     private let session: URLSession
+    /// Écart (secondes) entre l'horloge de S3 et celle du Mac, appris sur une erreur RequestTimeTooSkewed.
+    /// Ajouté à la date de signature des requêtes suivantes.
+    private var clockOffset: TimeInterval {
+        get { offsetLock.lock(); defer { offsetLock.unlock() }; return _clockOffset }
+        set { offsetLock.lock(); _clockOffset = newValue; offsetLock.unlock() }
+    }
+    private var _clockOffset: TimeInterval = 0
+    private let offsetLock = NSLock()
 
     init(bucket: String, region: String, credentials: AWSCredentialProvider) {
         self.bucket = bucket
@@ -73,9 +81,10 @@ final class S3Client {
         repeat {
             var query = [("list-type", "2"), ("prefix", prefix)]
             if let token { query.append(("continuation-token", token)) }
-            let request = try signedRequest(method: "GET", path: rootPath, query: query, payloadHash: SigV4.emptyPayloadHash)
-            let (data, response) = try await session.data(for: request)
-            try Self.check(response, data)
+            let data = try await perform {
+                try await self.session.data(for: try self.signedRequest(method: "GET", path: self.rootPath, query: query,
+                                                                       payloadHash: SigV4.emptyPayloadHash))
+            }
             let page = ListObjectsParser.parse(data)
             for object in page.objects { result[object.key] = object }
             token = page.isTruncated ? page.nextToken : nil
@@ -86,18 +95,59 @@ final class S3Client {
     func putObject(key: String, fileURL: URL, contentType: String?) async throws {
         var headers: [String: String] = [:]
         if let contentType { headers["content-type"] = contentType }
-        let request = try signedRequest(method: "PUT", path: path(forKey: key), query: [],
-                                        payloadHash: "UNSIGNED-PAYLOAD", extraHeaders: headers)
-        let (data, response) = try await session.upload(for: request, fromFile: fileURL)
-        try Self.check(response, data)
+        let path = path(forKey: key)
+        _ = try await perform {
+            let request = try self.signedRequest(method: "PUT", path: path, query: [],
+                                                 payloadHash: "UNSIGNED-PAYLOAD", extraHeaders: headers)
+            return try await self.session.upload(for: request, fromFile: fileURL)
+        }
     }
 
     func deleteObject(key: String) async throws {
-        let request = try signedRequest(method: "DELETE", path: path(forKey: key), query: [],
-                                        payloadHash: SigV4.emptyPayloadHash)
-        let (data, response) = try await session.data(for: request)
-        try Self.check(response, data)
+        let path = path(forKey: key)
+        _ = try await perform {
+            try await self.session.data(for: try self.signedRequest(method: "DELETE", path: path, query: [],
+                                                                   payloadHash: SigV4.emptyPayloadHash))
+        }
     }
+
+    /// Envoie une requête (signée dans `send`, donc à chaque tentative avec une date fraîche).
+    /// Si S3 répond RequestTimeTooSkewed (horloge du Mac décalée de plus de 15 min, par exemple
+    /// juste après une sortie de veille), on cale la signature sur l'heure de S3 et on réessaie une fois.
+    private func perform(_ send: () async throws -> (Data, URLResponse)) async throws -> Data {
+        let (data, response) = try await send()
+        if let offset = Self.skewCorrection(response, data) {
+            clockOffset = offset
+            Log.info("S3 clock differs from this Mac's clock by \(Int(offset.rounded())) s: re-signing with S3's time. Check the Mac's date & time settings.")
+            let (retryData, retryResponse) = try await send()
+            try Self.check(retryResponse, retryData)
+            return retryData
+        }
+        try Self.check(response, data)
+        return data
+    }
+
+    /// Écart horloge S3 − horloge locale si la réponse est une erreur RequestTimeTooSkewed, sinon nil.
+    /// L'heure de S3 vient de <ServerTime> dans le corps, à défaut de l'en-tête Date.
+    static func skewCorrection(_ response: URLResponse, _ data: Data, now: Date = Date()) -> TimeInterval? {
+        guard let http = response as? HTTPURLResponse, http.statusCode == 403 else { return nil }
+        let body = String(decoding: data, as: UTF8.self)
+        guard S3Error.extract(tag: "Code", from: body) == "RequestTimeTooSkewed" else { return nil }
+        let serverTime = S3Error.extract(tag: "ServerTime", from: body).flatMap { iso8601.date(from: $0) }
+            ?? http.value(forHTTPHeaderField: "Date").flatMap { httpDate.date(from: $0) }
+        guard let serverTime else { return nil }
+        return serverTime.timeIntervalSince(now)
+    }
+
+    private static let iso8601 = ISO8601DateFormatter()
+
+    private static let httpDate: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "GMT")
+        f.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        return f
+    }()
 
     // MARK: - Signature V4
 
@@ -107,7 +157,8 @@ final class S3Client {
         headers["host"] = host
         let signed = SigV4.sign(method: method, path: path, query: query, headers: headers,
                                 payloadHash: payloadHash, region: region, service: "s3",
-                                credentials: try credentials.credentials(), date: Date())
+                                credentials: try credentials.credentials(),
+                                date: Date().addingTimeInterval(clockOffset))
 
         var components = URLComponents()
         components.scheme = "https"

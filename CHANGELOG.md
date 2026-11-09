@@ -2,6 +2,14 @@
 
 All notable changes to Simple Sync S3 are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- `RequestTimeTooSkewed` (S3 HTTP 403) when the Mac's clock is more than 15 minutes off, for example just
+  after waking from sleep: the app now reads S3's time from the error, re-signs the request with it and
+  retries once, then keeps that correction for the rest of the sync. The measured gap is written to the log.
+
 ## [1.0.1] - 2026-11-09
 
 ### Added
